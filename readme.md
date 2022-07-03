@@ -1,6 +1,4 @@
-# Kubernetes/k8s setup  
-  
-  
+Kubernetes/k8s setup  
 # Control-Plane setup  
 ## install-control-plane  
 ```
