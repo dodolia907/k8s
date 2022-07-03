@@ -25,6 +25,10 @@ kubectl create -f https://projectcalico.docs.tigera.io/manifests/tigera-operator
 
 cd /home/ubuntu/
 wget https://projectcalico.docs.tigera.io/manifests/custom-resources.yaml
+
+## edit the custom-resources.yaml file
+## See https://github.com/launchpencil/lp-infra/blob/main/k8s/setup/calico/custom-resources.yaml
+vim custom-resources.yaml
 kubectl apply -f /home/ubuntu/custom-resources.yaml
 watch kubectl get pod -A -o wide
 ```
