@@ -12,7 +12,7 @@ vim ~/.bashrc
 export KUBECONFIG=/etc/kubernetes/admin.conf
 
 ## Build the Kubernetes cluster
-kubeadm init --control-plane-endpoint=192.168.1.181:6443 --pod-network-cidr=10.244.0.0/16 --ignore-preflight-errors=SystemVerification,Swap  
+kubeadm init --control-plane-endpoint=192.168.1.181:6443 --pod-network-cidr=10.244.0.0/16
 ```
 
 ## Worker
