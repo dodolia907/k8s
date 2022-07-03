@@ -12,7 +12,7 @@ vim ~/.bashrc
 export KUBECONFIG=/etc/kubernetes/admin.conf
 
 ## Build the Kubernetes cluster
-kubeadm init --control-plane-endpoint=192.168.1.181:6443 --pod-network-cidr=10.244.0.0/16
+kubeadm init --pod-network-cidr=10.244.0.0/16
 
 ## Configure kubectl
 mkdir -p $HOME/.kube
