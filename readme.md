@@ -31,8 +31,8 @@ cd /home/ubuntu/
 wget https://projectcalico.docs.tigera.io/manifests/custom-resources.yaml
 ```
 
-Read Sample Config (written by launchpencil)
-[https://github.com/launchpencil/lp-infra/blob/main/k8s/setup/calico/custom-resources.yaml](See https://github.com/launchpencil/lp-infra/blob/main/k8s/setup/calico/custom-resources.yaml)
+Read Sample Config (written by launchpencil)  
+https://github.com/launchpencil/lp-infra/blob/main/k8s/setup/calico/custom-resources.yaml
 ```
 ## edit the custom-resources.yaml file  
 vim custom-resources.yaml
