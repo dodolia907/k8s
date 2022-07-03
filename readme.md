@@ -1,6 +1,7 @@
 # k8s  
 ## Control-Plane  
-``` /root/
+```
+cd /
 chmod +x install-ubuntu-master.sh  
 ./install-ubuntu-master.sh  
 export KUBECONFIG=/etc/kubernetes/admin.conf
@@ -15,7 +16,8 @@ kubeadm init --control-plane-endpoint=192.168.1.181:6443 --pod-network-cidr=10.2
 ```
 
 ## Worker
-``` /root/
+```
+cd /
 chmod +x install-ubuntu-master.sh    
 ./install-ubuntu-worker.sh  
 
