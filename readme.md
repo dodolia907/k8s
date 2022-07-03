@@ -43,7 +43,7 @@ watch kubectl get pod -A -o wide
 # Worker
 ```
 cd /
-chmod +x install-ubuntu-master.sh    
+chmod +x install-ubuntu-worker.sh    
 ./install-ubuntu-worker.sh  
 
 ## Join the worker node to the Kubernetes cluster
