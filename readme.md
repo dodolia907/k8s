@@ -1,7 +1,8 @@
 # Control-Plane setup  
 ## install-control-plane  
 ```
-## Enter root user
+## SSH into the control-plane node  
+## Enter root user  
 sudo su -
 
 ## Execute this shell script and command to install the Control-Plane
@@ -47,15 +48,20 @@ wget https://projectcalico.docs.tigera.io/manifests/custom-resources.yaml
 Read Sample Config (written by launchpencil)  
 https://github.com/launchpencil/lp-infra/blob/main/k8s/setup/calico/custom-resources.yaml  
 
-## edit the custom-resources.yaml file  
+## Edit the custom-resources.yaml file  
 ```
 vim custom-resources.yaml
 kubectl apply -f /home/ubuntu/custom-resources.yaml
+```
+
+## Check the Calico status
+```
 watch kubectl get pod -A -o wide
 ```
 
 # Worker Node setup
 ```
+## SSH into the worker node
 ## Enter root user
 sudo su -
 
@@ -73,6 +79,7 @@ kubeadm join ...
 # Troubleshooting
 ## Control-plane
 ```
+## SSH into the control-plane node
 ## Execute the following command with general user
 sudo rm -rf ~/.kube
 
@@ -83,6 +90,7 @@ kubeadm reset
 
 ## Worker node
 ```
+## SSH into the worker node
 ## Reset kubeadm with root user
 sudo su -
 kubeadm reset
