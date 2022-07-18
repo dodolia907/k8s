@@ -18,6 +18,12 @@ vim ~/.bashrc
 ## Add the following line to ~/.bashrc
 export KUBECONFIG=/etc/kubernetes/admin.conf
 
+## Open /etc/default/grub and Edit it
+vim /etc/default/grub
+
+## Add the following line to /etc/default/grub
+GRUB_CMDLINE_LINUX_DEFAULT="systemd.unified_cgroup_hierarchy=false"
+
 ## Build the Kubernetes cluster
 kubeadm init --pod-network-cidr=10.244.0.0/16
 ```
