@@ -68,6 +68,12 @@ sudo su -
 cd ~
 chmod +x install-ubuntu-worker.sh    
 ./install-ubuntu-worker.sh  
+
+## configure kubelet cgroup driver
+vim /etc/default/kubelet
+KUBELET_EXTRA_ARGS=--cgroup-driver=systemd
+systemctl daemon-reload
+systemctl restart kubelet
 ```
 
 ## Join the worker node to the Kubernetes cluster
