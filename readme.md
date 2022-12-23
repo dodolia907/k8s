@@ -11,13 +11,17 @@ sudo su -
 
 ## Execute this shell script and command to install the Control-Plane
 cd ~
-wget https://raw.githubusercontent.com/dodolia907/k8s/main/install-ubuntu-cp.sh
-chmod +x install-ubuntu-master.sh  
-./install-ubuntu-master.sh  
+(ubuntu) wget https://raw.githubusercontent.com/dodolia907/k8s/main/install-ubuntu-cp.sh
+(ubuntu) chmod +x install-ubuntu-cp.sh
+(ubuntu) ./install-ubuntu-cp.sh  
+(rhel) wget https://raw.githubusercontent.com/dodolia907/k8s/main/install-rhel-cp.sh
+(rhel) chmod +x install-rhel-cp.sh  
+(rhel) ./install-rhel-cp.sh
 export KUBECONFIG=/etc/kubernetes/admin.conf  
 
 ## configure kubelet cgroup driver
-vim /etc/default/kubelet
+(ubuntu) vim /etc/default/kubelet
+(rhel) vim /etc/sysconfig/kubelet
 KUBELET_EXTRA_ARGS=--cgroup-driver=systemd
 systemctl daemon-reload
 systemctl restart kubelet
@@ -31,7 +35,6 @@ kubeadm init --pod-network-cidr=10.244.0.0/16
 ```
 
 # Network setup (Control-Plane)  
-
 ## Install Calico
 ```  
 kubectl create -f https://projectcalico.docs.tigera.io/manifests/tigera-operator.yaml
@@ -66,12 +69,16 @@ sudo su -
 
 ## Execute this shell script and command to install the Worker Node
 cd ~
-wget https://raw.githubusercontent.com/dodolia907/k8s/main/install-ubuntu-wk.sh
-chmod +x install-ubuntu-worker.sh    
-./install-ubuntu-worker.sh  
+(ubuntu) wget https://raw.githubusercontent.com/dodolia907/k8s/main/install-ubuntu-wk.sh
+(ubuntu) chmod +x install-ubuntu-wk.sh
+(ubuntu) ./install-ubuntu-wk.sh
+(rhel) wget https://raw.githubusercontent.com/dodolia907/k8s/main/install-rhel-wk.sh
+(rhel) chmod +x install-rhel-wk.sh
+(rhel) ./install-rhel-wk.sh  
 
 ## configure kubelet cgroup driver
-vim /etc/default/kubelet
+(ubuntu) vim /etc/default/kubelet
+(rhel) vim /etc/sysconfig/kubelet
 KUBELET_EXTRA_ARGS=--cgroup-driver=systemd
 systemctl daemon-reload
 systemctl restart kubelet
