@@ -47,6 +47,7 @@ sudo chmod +x ./calicoctl
 ```
 
 ## Setup Calico
+```
 cd ~
 mkdir manifests
 cd manifests
