@@ -21,6 +21,7 @@ update-alternatives --set ebtables /usr/sbin/ebtables-legacy
 apt-get install -y ufw
 systemctl start ufw
 ufw allow 22/tcp
+ufw allow 179/tcp
 ufw allow 10250/tcp
 ufw allow 30000:32767/tcp
 ufw enable
@@ -44,26 +45,33 @@ EOF
 sysctl --system
 
 #Containerdのインストール
+#Containerdのインストール
+## リポジトリの設定
+### HTTPS越しのリポジトリの使用をaptに許可するために、パッケージをインストール
 apt-get update && apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+## Docker公式のGPG鍵を追加
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+## Dockerのaptリポジトリの追加
 add-apt-repository \
     "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
     $(lsb_release -cs) \
     stable"
+## containerdのインストール
 apt-get update && apt-get install -y containerd.io
+# containerdの設定
 mkdir -p /etc/containerd
 containerd config default | sudo tee /etc/containerd/config.toml
+# containerdの再起動
 systemctl restart containerd
 systemctl enable containerd
 
-# kubernetesのインストール
+# kubeadm, kubelet, kubectlのインストール
 apt-get update && sudo apt-get install -y apt-transport-https curl
 curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
 cat <<EOF | sudo tee /etc/apt/sources.list.d/kubernetes.list
 deb https://apt.kubernetes.io/ kubernetes-xenial main
 EOF
-apt-get update && apt-get update
+apt-get update
 apt-get install -y kubelet kubeadm kubectl
 apt-mark hold kubelet kubeadm kubectl
-
 systemctl enable kubelet
