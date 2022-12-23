@@ -11,7 +11,7 @@ sudo su -
 
 ## Execute this shell script and command to install the Control-Plane
 cd ~
-wget https://raw.githubusercontent.com/dodolia907/k8s/main/install-ubuntu-master.sh
+wget https://raw.githubusercontent.com/dodolia907/k8s/main/install-ubuntu-cp.sh
 chmod +x install-ubuntu-master.sh  
 ./install-ubuntu-master.sh  
 export KUBECONFIG=/etc/kubernetes/admin.conf  
@@ -66,6 +66,7 @@ sudo su -
 
 ## Execute this shell script and command to install the Worker Node
 cd ~
+wget https://raw.githubusercontent.com/dodolia907/k8s/main/install-ubuntu-wk.sh
 chmod +x install-ubuntu-worker.sh    
 ./install-ubuntu-worker.sh  
 
