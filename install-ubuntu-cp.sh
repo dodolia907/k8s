@@ -22,14 +22,12 @@ apt-get install -y ufw
 systemctl start ufw
 ufw allow 22/tcp
 ufw allow 179/tcp
-ufw allow 443/tcp
 ufw allow 6443/tcp
 ufw allow 2379/tcp
 ufw allow 2380/tcp
 ufw allow 10250/tcp
 ufw allow 10251/tcp
 ufw allow 10252/tcp
-ufw allow 30000:32767/tcp
 ufw enable
 systemctl restart ufw
 
