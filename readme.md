@@ -1,4 +1,7 @@
 Kubernetes/k8s setup  
+https://kubernetes.io/ja/docs/setup/production-environment/tools/kubeadm/install-kubeadm/
+https://kubernetes.io/ja/docs/setup/production-environment/container-runtimes/
+https://kubernetes.io/ja/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/
 # Control-Plane setup  
 ## install-control-plane  
 ```
@@ -7,36 +10,24 @@ Kubernetes/k8s setup
 sudo su -
 
 ## Execute this shell script and command to install the Control-Plane
-cd /
+cd ~
+wget https://raw.githubusercontent.com/dodolia907/k8s/main/install-ubuntu-master.sh
 chmod +x install-ubuntu-master.sh  
 ./install-ubuntu-master.sh  
-export KUBECONFIG=/etc/kubernetes/admin.conf
+export KUBECONFIG=/etc/kubernetes/admin.conf  
+
+## configure kubelet cgroup driver
+vim /etc/default/kubelet
+KUBELET_EXTRA_ARGS=--cgroup-driver=systemd
+systemctl daemon-reload
+systemctl restart kubelet
 
 ## Open ~/.bashrc and Edit it
 vim ~/.bashrc  
-
-## Add the following line to ~/.bashrc
 export KUBECONFIG=/etc/kubernetes/admin.conf
-
-## Change Open /etc/default/grub and Edit it (Ubuntu22.04+)
-vim /etc/default/grub
-
-## Add the following line to /etc/default/grub (Ubuntu22.04+)
-GRUB_CMDLINE_LINUX_DEFAULT="systemd.unified_cgroup_hierarchy=false"
 
 ## Build the Kubernetes cluster
 kubeadm init --pod-network-cidr=10.244.0.0/16
-```
-
-## Configure kubectl
-```
-## Exit from root user  
-exit
-
-## Execute the following command with general user
-mkdir -p $HOME/.kube
-sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ```
 
 # Network setup (Control-Plane)  
@@ -45,20 +36,21 @@ sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ```  
 kubectl create -f https://projectcalico.docs.tigera.io/manifests/tigera-operator.yaml
 ```
-
-## Configure Calico
+## Install calicoctl
 ```
-cd /home/ubuntu/
-wget https://projectcalico.docs.tigera.io/manifests/custom-resources.yaml
+cd /usr/local/bin
+sudo curl -L https://github.com/projectcalico/calico/releases/download/v3.24.5/calicoctl-linux-amd64 -o calicoctl
+sudo chmod +x ./calicoctl
 ```
 
-Read Sample Config (written by launchpencil)  
-https://github.com/launchpencil/lp-infra/blob/main/k8s/setup/calico/custom-resources.yaml  
-
-## Edit the custom-resources.yaml file  
-```
-vim custom-resources.yaml
-kubectl apply -f /home/ubuntu/custom-resources.yaml
+## Setup Calico
+cd ~
+mkdir manifests
+cd manifests
+wget https://raw.githubusercontent.com/dodolia907/k8s/main/custom-resources.yaml
+wget https://raw.githubusercontent.com/dodolia907/k8s/main/ixbgp.yaml
+kubectl apply -f ~/manifests/custom-resources.yaml
+calicoctl apply -f ~/manifests/ixbgp.yaml
 ```
 
 ## Check the Calico status
@@ -73,7 +65,7 @@ watch kubectl get pod -A -o wide
 sudo su -
 
 ## Execute this shell script and command to install the Worker Node
-cd /
+cd ~
 chmod +x install-ubuntu-worker.sh    
 ./install-ubuntu-worker.sh  
 ```
@@ -83,7 +75,7 @@ chmod +x install-ubuntu-worker.sh
 kubeadm join ...
 ```
 
-# Troubleshooting
+# Reset Kubernetes
 ## Control-plane
 ```
 ## SSH into the control-plane node
