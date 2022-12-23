@@ -18,10 +18,10 @@ vim ~/.bashrc
 ## Add the following line to ~/.bashrc
 export KUBECONFIG=/etc/kubernetes/admin.conf
 
-## Open /etc/default/grub and Edit it
+## Change Open /etc/default/grub and Edit it (Ubuntu22.04+)
 vim /etc/default/grub
 
-## Add the following line to /etc/default/grub
+## Add the following line to /etc/default/grub (Ubuntu22.04+)
 GRUB_CMDLINE_LINUX_DEFAULT="systemd.unified_cgroup_hierarchy=false"
 
 ## Build the Kubernetes cluster
