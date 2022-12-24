@@ -28,7 +28,7 @@ export KUBECONFIG=/etc/kubernetes/admin.conf
 
 ## cgroupの設定
 vim /etc/containerd/config.toml
-## 以下の場所でSystemdCgroup = trueに変更
+## 以下の場所のSystemdCgroup = falseをtrueに変更
 [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
   ...
   [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
@@ -132,7 +132,7 @@ kubeadm join ...
 ```
 
 ## ルーターの設定
-ここではNEC IXルータを例とする。
+ここではNEC IXルータを用いる。
 ```
 ## ルーターにSSH接続する
 ## グローバルコンフィグモードに移行
