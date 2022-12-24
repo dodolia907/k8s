@@ -17,9 +17,6 @@ cd ~
 (rhel) wget https://raw.githubusercontent.com/dodolia907/k8s/main/install-rhel-cp.sh
 (rhel) chmod +x install-rhel-cp.sh  
 (rhel) ./install-rhel-cp.sh
-mkdir -p $HOME/.kube
-sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-sudo chown $(id -u):$(id -g) $HOME/.kube/config
 export KUBECONFIG=/etc/kubernetes/admin.conf  
 
 ## configure kubelet cgroup driver
@@ -35,6 +32,9 @@ export KUBECONFIG=/etc/kubernetes/admin.conf
 
 ## Build the Kubernetes cluster
 kubeadm init --pod-network-cidr=10.244.0.0/16
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ```
 
 # Network setup (Control-Plane)  
