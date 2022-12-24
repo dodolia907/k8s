@@ -14,20 +14,13 @@ sysctl --system
 update-alternatives --set iptables /usr/sbin/iptables-legacy
 
 # ファイアウォールの設定
-dnf update -y && dnf install -y ufw
-systemctl start ufw
-ufw allow 22/tcp
-ufw allow 179/tcp
-ufw allow 443/tcp
-ufw allow 4789/tcp
-ufw allow 5473/tcp
-ufw allow 10250/tcp
-ufw allow 30000:32767/tcp
-ufw enable
-systemctl restart ufw
-systemctl enable ufw
-systemctl disable firewalld
-systemctl stop firewalld
+firewalld-cmd --permanent --add-port=179/tcp
+firewalld-cmd --permanent --add-port=443/tcp
+firewalld-cmd --permanent --add-port=4789/tcp
+firewalld-cmd --permanent --add-port=5473/tcp
+firewalld-cmd --permanent --add-port=10250/tcp
+firewalld-cmd --permanent --add-port=30000-32767/tcp
+firewalld-cmd --reload
 
 # Containerdに必要な設定の追加
 cat > /etc/modules-load.d/containerd.conf <<EOF
