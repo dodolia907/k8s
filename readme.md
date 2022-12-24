@@ -1,13 +1,13 @@
-Kubernetes/k8s setup  
-# 参考
+# Kubernetesのセットアップ  
+## 参考
 https://kubernetes.io/ja/docs/setup/production-environment/tools/kubeadm/install-kubeadm/
 https://kubernetes.io/ja/docs/setup/production-environment/container-runtimes/
 https://kubernetes.io/ja/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/
 https://kubernetes.io/docs/setup/production-environment/container-runtimes/#containerd-systemd
 
-# 注意
+## 注意
 RHEL系OS用のスクリプトも用意してあるが未検証。
-Ubuntu用のスクリプトはUbuntu 20.04 LTSで動作確認済み。
+Ubuntu用のスクリプトはUbuntu 22.04 LTSで動作確認済み。
 
 # コントロールプレーンのセットアップ  
 ## コントロールプレーンにKubernetesをインストールする    
@@ -33,6 +33,7 @@ vim /etc/containerd/config.toml
   ...
   [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
     SystemdCgroup = true
+
 ## containerdの再起動
 systemctl restart containerd
 
@@ -54,15 +55,17 @@ sudo chown $(id -u):$(id -g) $HOME/.kube/config
 # ネットワークのセットアップ
 ## Calicoのインストール
 ```  
-## SSHで一般ユーザーとしてコントロールプレーンノードに接続する
+## SSHで一般ユーザーとしてコントロールプレーンノードに接続し、インストール
 kubectl create -f https://projectcalico.docs.tigera.io/manifests/tigera-operator.yaml
 ```
 ## calicoctlのインストール
 ```
 ## PATHの通っているディレクトリに移動
 cd /usr/local/bin
+
 ## calicoctlのダウンロード
 sudo curl -L https://github.com/projectcalico/calico/releases/download/v3.24.5/calicoctl-linux-amd64 -o calicoctl
+
 ## 実行権限の付与
 sudo chmod +x ./calicoctl
 ```
@@ -73,14 +76,17 @@ sudo chmod +x ./calicoctl
 cd ~
 mkdir manifests
 cd manifests
+
 ## Calicoの設定ファイルをダウンロード
 wget https://raw.githubusercontent.com/dodolia907/k8s/main/custom-resources.yaml
 wget https://raw.githubusercontent.com/dodolia907/k8s/main/ixbgp.yaml
 wget https://raw.githubusercontent.com/dodolia907/k8s/main/bgpconfig.yaml
+
 ## CIDRやAS番号など、環境に合わせて編集
 vim custom-resources.yaml
 vim ixbgp.yaml
 vim bgpconfig.yaml
+
 ## 設定適用
 kubectl apply -f custom-resources.yaml
 calicoctl apply -f ixbgp.yaml
@@ -114,38 +120,45 @@ vim /etc/containerd/config.toml
   ...
   [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
     SystemdCgroup = true
+
 ## containerdの再起動
 systemctl restart containerd
 ```
 
 ## クラスタへ参加
 ```
-## コントロールプレーンノードで実行したkubeadm initの結果に表示されたkubeadm join ... をペーストして実行する
+## コントロールプレーンノードで実行したkubeadm initの結果 kubeadm join ... を実行する
 kubeadm join ...
 ```
 
 ## ルーターの設定
-ここではNEC IXルータを例とする
+ここではNEC IXルータを例とする。
 ```
 ## ルーターにSSH接続する
 ## グローバルコンフィグモードに移行
 enable-config
+
 ## BGP起動・BGPコンフィグモードに移行 (ルータ自身のAS番号を入力)
 router bgp 65000
+
 ## 新規ピア設定 (全てのコントロールプレーン・ワーカーノードのIPアドレスを入力)
 neighbor [ノード1のIPアドレス] remote-as 65000
 neighbor [ノード2のIPアドレス] remote-as 65000
 neighbor [ノード3のIPアドレス] remote-as 65000
 neighbor [ノード4のIPアドレス] remote-as 65000
+
 ## ルートリフレクタクライアントの設定
 neighbor [ノード1のIPアドレス] route-reflector-client
 neighbor [ノード2のIPアドレス] route-reflector-client
 neighbor [ノード3のIPアドレス] route-reflector-client
 neighbor [ノード4のIPアドレス] route-reflector-client
+
 ## グローバルコンフィグモードに戻る
 exit
+
 ## 設定保存
 write memory
+
 ## 確認 (StateがESTABLISHEDになっていればOK)
 show ip bgp summary
 ```
@@ -162,6 +175,8 @@ watch kubectl get pod -A -o wide
 # リセット
 ```
 kubeadm reset
+
+## 手順が表示されるので従う
 rm -rf /etc/cni/net.d
 rm -rf $HOME/.kube/config
 iptables -F
