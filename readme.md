@@ -2,6 +2,7 @@ Kubernetes/k8s setup
 https://kubernetes.io/ja/docs/setup/production-environment/tools/kubeadm/install-kubeadm/
 https://kubernetes.io/ja/docs/setup/production-environment/container-runtimes/
 https://kubernetes.io/ja/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/
+https://kubernetes.io/docs/setup/production-environment/container-runtimes/#containerd-systemd
 # Control-Plane setup  
 ## install-control-plane  
 ```
@@ -19,12 +20,15 @@ cd ~
 (rhel) ./install-rhel-cp.sh
 export KUBECONFIG=/etc/kubernetes/admin.conf  
 
-## configure kubelet cgroup driver
-(ubuntu) vim /etc/default/kubelet
-(rhel) vim /etc/sysconfig/kubelet
-KUBELET_EXTRA_ARGS=--cgroup-driver=systemd
-systemctl daemon-reload
-systemctl restart kubelet
+## configure cgroup driver
+vim /etc/containerd/config.toml
+
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
+  ...
+  [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
+    SystemdCgroup = true
+
+systemctl restart containerd
 
 ## Open ~/.bashrc and Edit it
 vim ~/.bashrc  
@@ -80,12 +84,15 @@ cd ~
 (rhel) chmod +x install-rhel-wk.sh
 (rhel) ./install-rhel-wk.sh  
 
-## configure kubelet cgroup driver
-(ubuntu) vim /etc/default/kubelet
-(rhel) vim /etc/sysconfig/kubelet
-KUBELET_EXTRA_ARGS=--cgroup-driver=systemd
-systemctl daemon-reload
-systemctl restart kubelet
+## configure cgroup driver
+vim /etc/containerd/config.toml
+
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
+  ...
+  [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
+    SystemdCgroup = true
+
+systemctl restart containerd
 ```
 
 ## Join the worker node to the Kubernetes cluster
