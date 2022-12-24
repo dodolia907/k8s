@@ -15,8 +15,12 @@ update-alternatives --set iptables /usr/sbin/iptables-legacy
 
 # ファイアウォールの設定
 dnf update -y && dnf install -y ufw
+systemctl start ufw
 ufw allow 22/tcp
 ufw allow 179/tcp
+ufw allow 443/tcp
+ufw allow 4789/tcp
+ufw allow 5473/tcp
 ufw allow 10250/tcp
 ufw allow 30000:32767/tcp
 ufw enable
