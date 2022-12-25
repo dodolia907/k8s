@@ -14,17 +14,17 @@ sysctl --system
 update-alternatives --set iptables /usr/sbin/iptables-legacy
 
 # ファイアウォールの設定
-firewalld-cmd --permanent --add-port=179/tcp
-firewalld-cmd --permanent --add-port=443/tcp
-firewalld-cmd --permanent --add-port=2379/tcp
-firewalld-cmd --permanent --add-port=2380/tcp
-firewalld-cmd --permanent --add-port=4789/tcp
-firewalld-cmd --permanent --add-port=5473/tcp
-firewalld-cmd --permanent --add-port=6443/tcp
-firewalld-cmd --permanent --add-port=10250/tcp
-firewalld-cmd --permanent --add-port=10251/tcp
-firewalld-cmd --permanent --add-port=10252/tcp
-firewalld-cmd --reload
+firewall-cmd --permanent --add-port=179/tcp
+firewall-cmd --permanent --add-port=443/tcp
+firewall-cmd --permanent --add-port=2379/tcp
+firewall-cmd --permanent --add-port=2380/tcp
+firewall-cmd --permanent --add-port=4789/tcp
+firewall-cmd --permanent --add-port=5473/tcp
+firewall-cmd --permanent --add-port=6443/tcp
+firewall-cmd --permanent --add-port=10250/tcp
+firewall-cmd --permanent --add-port=10251/tcp
+firewall-cmd --permanent --add-port=10252/tcp
+firewall-cmd --reload
 
 # Containerdに必要な設定の追加
 cat > /etc/modules-load.d/containerd.conf <<EOF
