@@ -61,14 +61,14 @@ containerd config default | sudo tee /etc/containerd/config.toml
 systemctl restart containerd
 
 # kubeadm, kubelet, kubectlのインストール
-cat <<EOF > /etc/yum.repos.d/kubernetes.repo
+cat <<EOF | sudo tee /etc/yum.repos.d/kubernetes.repo
 [kubernetes]
 name=Kubernetes
-baseurl=https://pkgs.k8s.io/yum/repos/kubernetes-el7-x86_64
+baseurl=https://pkgs.k8s.io/core:/stable:/v1.28/rpm/
 enabled=1
 gpgcheck=1
-repo_gpgcheck=1
-gpgkey=https://pkgs.k8s.io/yum/doc/yum-key.gpg https://pkgs.k8s.io/yum/doc/rpm-package-key.gpg
+gpgkey=https://pkgs.k8s.io/core:/stable:/v1.28/rpm/repodata/repomd.xml.key
+exclude=kubelet kubeadm kubectl cri-tools kubernetes-cni
 EOF
 
 # SELinuxをpermissiveモードに設定する(効果的に無効化する)
