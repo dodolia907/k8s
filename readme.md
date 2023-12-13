@@ -5,10 +5,6 @@ https://kubernetes.io/ja/docs/setup/production-environment/container-runtimes/
 https://kubernetes.io/ja/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/
 https://kubernetes.io/docs/setup/production-environment/container-runtimes/#containerd-systemd
 
-## 注意
-RHEL系OS用のスクリプトも用意してあるが未検証。
-Ubuntu用のスクリプトはUbuntu 22.04 LTSで動作確認済み。
-
 # コントロールプレーンのセットアップ  
 ## コントロールプレーンにKubernetesをインストールする    
 ```
@@ -44,7 +40,7 @@ export KUBECONFIG=/etc/kubernetes/admin.conf
 ## クラスタの初期化
 ## kubeadm join... と表示されるので、後でワーカーノードで使うためにメモしておく
 ## pod-network-cidrは他と被らない任意のCIDRを指定する
-kubeadm init --pod-network-cidr=10.244.0.0/16
+kubeadm init --pod-network-cidr=10.8.0.0/16
 
 ## kubectlをroot以外のユーザーでも使えるようにする
 mkdir -p $HOME/.kube
