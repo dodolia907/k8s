@@ -1,9 +1,4 @@
 # Kubernetesのセットアップ  
-## 参考
-https://kubernetes.io/ja/docs/setup/production-environment/tools/kubeadm/install-kubeadm/
-https://kubernetes.io/ja/docs/setup/production-environment/container-runtimes/
-https://kubernetes.io/ja/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/
-https://kubernetes.io/docs/setup/production-environment/container-runtimes/#containerd-systemd
 
 # コントロールプレーンのセットアップ  
 ## コントロールプレーンにKubernetesをインストールする    
@@ -60,7 +55,7 @@ kubectl create -f https://projectcalico.docs.tigera.io/manifests/tigera-operator
 cd /usr/local/bin
 
 ## calicoctlのダウンロード
-sudo curl -L https://github.com/projectcalico/calico/releases/download/v3.24.5/calicoctl-linux-amd64 -o calicoctl
+sudo curl -L https://github.com/projectcalico/calico/releases/download/v3.26.4/calicoctl-linux-amd64 -o calicoctl
 
 ## 実行権限の付与
 sudo chmod +x ./calicoctl
@@ -178,3 +173,9 @@ rm -rf $HOME/.kube/config
 iptables -F
 sudo reboot
 ```
+
+# 参考資料
+https://kubernetes.io/ja/docs/setup/production-environment/tools/kubeadm/install-kubeadm/
+https://kubernetes.io/ja/docs/setup/production-environment/container-runtimes/
+https://kubernetes.io/ja/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/
+https://kubernetes.io/docs/setup/production-environment/container-runtimes/#containerd-systemd
