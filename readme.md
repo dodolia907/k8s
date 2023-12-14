@@ -1,7 +1,8 @@
 # Kubernetesのセットアップ  
 
 # コントロールプレーンのセットアップ  
-## コントロールプレーンにKubernetesをインストールする    
+## コントロールプレーンにKubernetesをインストールする  
+AlmaLinux 9.3にて動作確認済み  
 ```
 ## コントロールプレーンノードにSSH接続する  
 ## rootユーザーに切り替える
@@ -9,10 +10,10 @@ sudo su -
 
 ## コントロールプレーンノードでシェルスクリプトを実行
 cd ~
-(ubuntu) wget https://raw.githubusercontent.com/dodolia907/k8s/main/install-ubuntu-cp.sh
+(ubuntu) wget https://raw.githubusercontent.com/dodolia907/k8s/main/install-k8s/install-ubuntu-cp.sh
 (ubuntu) chmod +x install-ubuntu-cp.sh
 (ubuntu) ./install-ubuntu-cp.sh  
-(rhel) wget https://raw.githubusercontent.com/dodolia907/k8s/main/install-rhel-cp.sh
+(rhel) wget https://raw.githubusercontent.com/dodolia907/k8s/main/install-k8s/install-rhel-cp.sh
 (rhel) chmod +x install-rhel-cp.sh  
 (rhel) ./install-rhel-cp.sh
 export KUBECONFIG=/etc/kubernetes/admin.conf  
@@ -47,7 +48,7 @@ sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ## Calicoのインストール
 ```  
 ## SSHで一般ユーザーとしてコントロールプレーンノードに接続し、インストール
-kubectl create -f https://projectcalico.docs.tigera.io/manifests/tigera-operator.yaml
+kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.4/manifests/tigera-operator.yaml
 ```
 ## calicoctlのインストール
 ```
@@ -69,9 +70,9 @@ mkdir manifests
 cd manifests
 
 ## Calicoの設定ファイルをダウンロード
-wget https://raw.githubusercontent.com/dodolia907/k8s/main/custom-resources.yaml
-wget https://raw.githubusercontent.com/dodolia907/k8s/main/ixbgp.yaml
-wget https://raw.githubusercontent.com/dodolia907/k8s/main/bgpconfig.yaml
+wget https://raw.githubusercontent.com/dodolia907/k8s/main/calico/custom-resources.yaml
+wget https://raw.githubusercontent.com/dodolia907/k8s/main/calico/ixbgp.yaml
+wget https://raw.githubusercontent.com/dodolia907/k8s/main/calico/bgpconfig.yaml
 
 ## CIDRやAS番号など、環境に合わせて編集
 vim custom-resources.yaml
@@ -97,10 +98,10 @@ sudo su -
 
 ## ワーカーノードでシェルスクリプトを実行
 cd ~
-(ubuntu) wget https://raw.githubusercontent.com/dodolia907/k8s/main/install-ubuntu-wk.sh
+(ubuntu) wget https://raw.githubusercontent.com/dodolia907/k8s/main/install-k8s/install-ubuntu-wk.sh
 (ubuntu) chmod +x install-ubuntu-wk.sh
 (ubuntu) ./install-ubuntu-wk.sh
-(rhel) wget https://raw.githubusercontent.com/dodolia907/k8s/main/install-rhel-wk.sh
+(rhel) wget https://raw.githubusercontent.com/dodolia907/k8s/main/install-k8s/install-rhel-wk.sh
 (rhel) chmod +x install-rhel-wk.sh
 (rhel) ./install-rhel-wk.sh  
 
@@ -161,6 +162,25 @@ calicoctl get bgpPeer -o wide
 calicoctl get ippool -o wide
 calicoctl get bgpConfiguration -o wide
 watch kubectl get pod -A -o wide
+```
+
+# NFSサーバのセットアップ
+```
+## NFSサーバにSSH接続する
+## rootユーザーに切り替える
+sudo su -
+mkdir /nfs
+dnf install nfs-utils
+systemctl enable --now nfs-server
+echo "/nfs 192.168.1.0/24(rw,sync,no_root_squash,no_subtree_check)" >> /etc/exports
+exportfs -a
+exportfs -v
+firewall-cmd --add-service=nfs --permanent
+firewall-cmd --reload
+## コントロールプレーンノードに戻って作業
+git clone https://github.com/dodolia907/k8s.git
+cd k8s//nfs-provisioner
+kubectl apply -k .
 ```
 
 # リセット

@@ -79,3 +79,7 @@ dnf install -y kubelet kubeadm kubectl --disableexcludes=kubernetes
 
 systemctl enable --now kubelet
 systemctl enable --now containerd
+
+# nfs-utilsのインストール
+dnf install -y nfs-utils
+systemctl enable --now rpcbind nfs-server
