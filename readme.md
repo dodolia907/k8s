@@ -95,6 +95,8 @@ vim bgppeer.yaml
 ## 設定適用
 kubectl create -f custom-resources.yaml
 calicoctl apply -f ixbgp.yaml
+## ToRとして構成
+calicoctl patch bgpconfiguration default -p '{"spec": {"nodeToNodeMeshEnabled": false}}'
 ```
 ## 一旦確認
 ```
