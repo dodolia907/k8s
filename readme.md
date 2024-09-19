@@ -88,16 +88,13 @@ mkdir manifests
 cd manifests
 ## Calicoの設定ファイルをダウンロード
 wget https://raw.githubusercontent.com/dodolia907/k8s/main/calico/custom-resources.yaml
-wget https://raw.githubusercontent.com/dodolia907/k8s/main/calico/ixbgp.yaml
-wget https://raw.githubusercontent.com/dodolia907/k8s/main/calico/bgpconfig.yaml
+wget https://raw.githubusercontent.com/dodolia907/k8s/main/calico/bgppeer.yaml
 ## CIDRやAS番号など、環境に合わせて編集
 vim custom-resources.yaml
-vim ixbgp.yaml
-vim bgpconfig.yaml
+vim bgppeer.yaml
 ## 設定適用
-kubectl apply -f custom-resources.yaml
+kubectl create -f custom-resources.yaml
 calicoctl apply -f ixbgp.yaml
-calicoctl apply -f bgpconfig.yaml
 ```
 ## 一旦確認
 ```
@@ -167,15 +164,10 @@ enable-config
 ## BGP起動・BGPコンフィグモードに移行 (ルータ自身のAS番号を入力)
 router bgp 65000
 ## 新規ピア設定 (全てのコントロールプレーン・ワーカーノードのIPアドレスを入力)
-neighbor [ノード1のIPアドレス] remote-as 65000
-neighbor [ノード2のIPアドレス] remote-as 65000
-neighbor [ノード3のIPアドレス] remote-as 65000
-neighbor [ノード4のIPアドレス] remote-as 65000
-## ルートリフレクタクライアントの設定
-neighbor [ノード1のIPアドレス] route-reflector-client
-neighbor [ノード2のIPアドレス] route-reflector-client
-neighbor [ノード3のIPアドレス] route-reflector-client
-neighbor [ノード4のIPアドレス] route-reflector-client
+neighbor [ノード1のIPアドレス] remote-as 64512
+neighbor [ノード2のIPアドレス] remote-as 64512
+neighbor [ノード3のIPアドレス] remote-as 64512
+neighbor [ノード4のIPアドレス] remote-as 64512
 ## グローバルコンフィグモードに戻る
 exit
 ## 設定保存
