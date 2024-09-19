@@ -43,6 +43,14 @@ containerd config default > /etc/containerd/config.toml
 sed -i '/\[plugins\."io\.containerd\.grpc\.v1\.cri"\.containerd\.runtimes\.runc\.options\]/,/^$/s/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
 ## containerdの再起動
 systemctl restart containerd
+## kubeadm、kubelet、kubectlのインストール
+apt-get update
+apt-get install -y apt-transport-https ca-certificates curl gpg
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.31/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.31/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+apt-get update
+apt-get install -y kubelet kubeadm kubectl
+apt-mark hold kubelet kubeadm kubectl
 ## root以外のユーザーでもkubectlを使えるようにする
 export KUBECONFIG=/etc/kubernetes/admin.conf
 ## ~/.bashrcに追記
@@ -137,6 +145,14 @@ containerd config default > /etc/containerd/config.toml
 sed -i '/\[plugins\."io\.containerd\.grpc\.v1\.cri"\.containerd\.runtimes\.runc\.options\]/,/^$/s/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
 ## containerdの再起動
 systemctl restart containerd
+## kubeadm、kubelet、kubectlのインストール
+apt-get update
+apt-get install -y apt-transport-https ca-certificates curl gpg
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.31/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.31/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+apt-get update
+apt-get install -y kubelet kubeadm kubectl
+apt-mark hold kubelet kubeadm kubectl
 ## クラスタへ参加
 ## コントロールプレーンノードで実行したkubeadm initの結果 kubeadm join ... を実行する
 kubeadm join ...
