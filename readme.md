@@ -89,14 +89,15 @@ cd manifests
 ## Calicoの設定ファイルをダウンロード
 wget https://raw.githubusercontent.com/dodolia907/k8s/main/calico/custom-resources.yaml
 wget https://raw.githubusercontent.com/dodolia907/k8s/main/calico/bgppeer.yaml
+wget https://raw.githubusercontent.com/dodolia907/k8s/main/calico/config.yaml
 ## CIDRやAS番号など、環境に合わせて編集
 vim custom-resources.yaml
 vim bgppeer.yaml
+vim config.yaml
 ## 設定適用
 kubectl create -f custom-resources.yaml
-calicoctl apply -f ixbgp.yaml
-## ToRとして構成
-calicoctl patch bgpconfiguration default -p '{"spec": {"nodeToNodeMeshEnabled": false}}'
+calicoctl apply -f bgppeer.yaml
+calicoctl apply -f config.yaml
 ```
 ## 一旦確認
 ```
