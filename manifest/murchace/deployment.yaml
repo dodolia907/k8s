@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: murchace
+  labels:
+    app: murchace
+  namespace: murchace
+spec:
+  selector:
+    matchLabels:
+      app: murchace
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: murchace
+    spec:
+      containers:
+      - name: murchace
+        image: ghcr.io/tut-cc/murchace:main
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
+        volumeMounts:
+        - mountPath: /murchace/db
+          name: murchace-db
+      volumes:
+      - name: murchace-db
+        persistentVolumeClaim:
+          claimName: murchace-db
