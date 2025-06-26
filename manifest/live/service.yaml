@@ -11,6 +11,7 @@ spec:
   selector:
     app: rtmp-live-server
   type: LoadBalancer
+  LoadBalancerIP: 10.88.254.254
   ports:
     - name: rtmp
       protocol: TCP
