@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: speedtest-deployment
+  labels:
+    app: speedtest
+  namespace: speedtest
+spec:
+  selector:
+    matchLabels:
+      app: speedtest
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: speedtest
+    spec:
+      containers:
+      - name: speedtest
+        image: openspeedtest/latest
+        ports:
+        - containerPort: 3000
+        - containerPort: 3001
+      restartPolicy: Always
