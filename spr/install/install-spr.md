@@ -66,6 +66,22 @@ calicoctl get ippool -o wide
 calicoctl get bgpConfiguration -o wide
 watch kubectl get pod -A -o wide
 ```
+## nfs-subdir-external-provisionerのインストール
+```
+sudo apt-get install --yes nfs-kernel-server
+sudo vim /etc/exports
+/nfs localhost(rw,no_root_squash)
+sudo systemctl restart nfs-server
+sudo systemctl enable --now nfs-server
+sudo apt-get update && sudo apt-get install gpg --yes
+curl https://baltocdn.com/helm/signing.asc | gpg --dearmor | sudo tee /usr/share/keyrings/helm.gpg > /dev/null
+sudo apt-get install apt-transport-https --yes
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
+sudo apt-get update
+sudo apt-get install helm
+helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
+helm install nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner --set nfs.server=localhost --set nfs.path=/nfs
+```
 ## MetalLBのインストール
 ```
 kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.15.2/config/manifests/metallb-native.yaml
@@ -83,7 +99,20 @@ argocd admin initial-password -n argocd
 argocd login 10.89.0.0
 argocd account update-password
 ```
-
+## KubeVirtのインストール
+```
+export RELEASE=$(curl https://storage.googleapis.com/kubevirt-prow/release/kubevirt/kubevirt/stable.txt)
+kubectl apply -f https://github.com/kubevirt/kubevirt/releases/download/${RELEASE}/kubevirt-operator.yaml
+kubectl apply -f https://github.com/kubevirt/kubevirt/releases/download/${RELEASE}/kubevirt-cr.yaml
+kubectl -n kubevirt wait kv kubevirt --for condition=Available
+```
+## CDIのインストール
+```
+export TAG=$(curl -s -w %{redirect_url} https://github.com/kubevirt/containerized-data-importer/releases/latest)
+export VERSION=$(echo ${TAG##*/})
+kubectl create -f https://github.com/kubevirt/containerized-data-importer/releases/download/$VERSION/cdi-operator.yaml
+kubectl create -f https://github.com/kubevirt/containerized-data-importer/releases/download/$VERSION/cdi-cr.yaml
+```
 # リセット
 ```
 /usr/local/bin/k3s-uninstall.sh
