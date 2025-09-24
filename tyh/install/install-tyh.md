@@ -1,64 +1,31 @@
 # Kubernetesのセットアップ  
-Debian 12にて動作確認済み  
+Debian 13にて動作確認済み  
 # コントロールプレーンのセットアップ  
 ## コントロールプレーンにKubernetesをインストールする  
 ```
 ## コントロールプレーンノードにSSH接続する  
 ## rootユーザーに切り替える
 sudo su -
-## IPv4フォワーディングを有効化、iptablesからブリッジされたトラフィックを見えるようにする
-cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf
-overlay
-br_netfilter
-EOF
-sudo modprobe overlay
-sudo modprobe br_netfilter
-cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
-net.bridge.bridge-nf-call-iptables  = 1
-net.bridge.bridge-nf-call-ip6tables = 1
-net.ipv4.ip_forward                 = 1
-EOF
-##カーネルパラメーターを適用
-sudo sysctl --system
-## containerdのインストール
+## CRI-Oのインストール
 ## リポジトリの追加
-apt-get update
-apt-get install ca-certificates curl
-install -m 0755 -d /etc/apt/keyrings
-curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
-chmod a+r /etc/apt/keyrings/docker.asc
-echo \
-  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian \
-  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
-  tee /etc/apt/sources.list.d/docker.list > /dev/null
-apt-get update
-apt-get install -y containerd.io
-containerd config default > /etc/containerd/config.toml
-## cgroupの設定
-## 以下の場所のSystemdCgroup = falseをtrueに変更
-# [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
-#  ...
-#  [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
-#    SystemdCgroup = true
-sed -i '/\[plugins\."io\.containerd\.grpc\.v1\.cri"\.containerd\.runtimes\.runc\.options\]/,/^$/s/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
-## containerdの再起動
-systemctl restart containerd
+KUBERNETES_VERSION=v1.34
+CRIO_VERSION=v1.34
+curl -fsSL https://pkgs.k8s.io/core:/stable:/$KUBERNETES_VERSION/deb/Release.key |
+    gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/$KUBERNETES_VERSION/deb/ /" |
+    tee /etc/apt/sources.list.d/kubernetes.list
+curl -fsSL https://download.opensuse.org/repositories/isv:/cri-o:/stable:/$CRIO_VERSION/deb/Release.key |
+    gpg --dearmor -o /etc/apt/keyrings/cri-o-apt-keyring.gpg
+echo "deb [signed-by=/etc/apt/keyrings/cri-o-apt-keyring.gpg] https://download.opensuse.org/repositories/isv:/cri-o:/stable:/$CRIO_VERSION/deb/ /" |
+    tee /etc/apt/sources.list.d/cri-o.list
 ## kubeadm、kubelet、kubectlのインストール
 apt-get update
-apt-get install -y apt-transport-https ca-certificates curl gpg
-curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.31/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.31/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
-apt-get update
-apt-get install -y kubelet kubeadm kubectl
-apt-mark hold kubelet kubeadm kubectl
-## root以外のユーザーでもkubectlを使えるようにする
-export KUBECONFIG=/etc/kubernetes/admin.conf
-## ~/.bashrcに追記
-echo "export KUBECONFIG=/etc/kubernetes/admin.conf" >> ~/.bashrc
+apt-get install -y cri-o kubelet kubeadm kubectl
+systemctl start crio.service
 ## クラスタの初期化
 ## kubeadm join... と表示されるので、後でワーカーノードで使うためにメモしておく
 ## pod-network-cidrは他と被らない任意のCIDRを指定する
-kubeadm init --pod-network-cidr=10.8.0.0/16
+kubeadm init --pod-network-cidr=10.88.0.0/16
 ## kubectlをroot以外のユーザーでも使えるようにする
 mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
