@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: speedtest-service-v6
+  labels:
+    app: speedtest
+  namespace: speedtest
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: speed.k8s.ddlia.com
+spec:
+  selector:
+    app: speedtest
+  type: LoadBalancer
+  ipFamilies:
+    - IPv6
+  ipFamilyPolicy: SingleStack
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 3000
+    - name: https
+      protocol: TCP
+      port: 443
+      targetPort: 3001
