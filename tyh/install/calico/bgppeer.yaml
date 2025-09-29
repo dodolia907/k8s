@@ -1,7 +1,7 @@
 apiVersion: projectcalico.org/v3
 kind: BGPPeer
 metadata:
-  name: ix3110
+  name: fortigate
 spec:
   peerIP: 10.1.0.1
   asNumber: 65000
