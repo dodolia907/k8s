@@ -1,11 +1,25 @@
 # Kubernetesのセットアップ  
 Debian 13にて動作確認済み  
-# コントロールプレーンのセットアップ  
-## コントロールプレーンにKubernetesをインストールする  
+## コンテナランタイムの準備  
 ```
-## コントロールプレーンノードにSSH接続する  
+## 全てのノードで実施  
 ## rootユーザーに切り替える
 sudo su -
+## IPv4フォワーディングを有効化、iptablesからブリッジされたトラフィックを見えるようにする
+cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf
+overlay
+br_netfilter
+EOF
+sudo modprobe overlay
+sudo modprobe br_netfilter
+cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
+net.bridge.bridge-nf-call-iptables  = 1
+net.bridge.bridge-nf-call-ip6tables = 1
+net.ipv4.ip_forward                 = 1
+net.ipv6.conf.all.forwarding        = 1
+EOF
+##カーネルパラメーターを適用
+sysctl --system
 ## CRI-Oのインストール
 ## リポジトリの追加
 KUBERNETES_VERSION=v1.34
@@ -22,28 +36,31 @@ echo "deb [signed-by=/etc/apt/keyrings/cri-o-apt-keyring.gpg] https://download.o
 apt-get update
 apt-get install -y cri-o kubelet kubeadm kubectl
 systemctl start crio.service
+```
+
 ## クラスタの初期化
+```
 ## kubeadm join... と表示されるので、後でワーカーノードで使うためにメモしておく
 ## pod-network-cidrは他と被らない任意のCIDRを指定する
-kubeadm init --pod-network-cidr=10.88.0.0/16
+kubeadm init --pod-network-cidr=10.8.0.0/16,fdf6:ad60:1db0::/64 --service-cidr=10.88.0.0/16,<NTT-NGN RA Prefix>:feed::/112
 ## kubectlをroot以外のユーザーでも使えるようにする
 mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ```
 
-# ネットワークのセットアップ
-## Calicoのインストール
+## ネットワークのセットアップ
 ```  
 ## SSHで一般ユーザーとしてコントロールプレーンノードに接続し、インストール
-kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.28.1/manifests/tigera-operator.yaml
+kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.30.3/manifests/operator-crds.yaml
+kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.30.3/manifests/tigera-operator.yaml
 ```
 ## calicoctlのインストール
 ```
 ## PATHの通っているディレクトリに移動
 cd /usr/local/bin
 ## calicoctlのダウンロード
-sudo curl -L https://github.com/projectcalico/calico/releases/download/v3.28.1/calicoctl-linux-amd64 -o calicoctl
+sudo curl -L https://github.com/projectcalico/calico/releases/download/v3.30.3/calicoctl-linux-amd64 -o calicoctl
 ## 実行権限の付与
 sudo chmod +x ./calicoctl
 ```
@@ -70,57 +87,9 @@ calicoctl apply -f config.yaml
 ```
 watch kubectl get pod -A -o wide
 ```
-# ワーカーノードのセットアップ
+
+## ワーカーノードのクラスタへの参加
 ```
-## ワーカーノードにSSH接続する
-## rootユーザーに切り替える
-sudo su -
-## IPv4フォワーディングを有効化、iptablesからブリッジされたトラフィックを見えるようにする
-cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf
-overlay
-br_netfilter
-EOF
-sudo modprobe overlay
-sudo modprobe br_netfilter
-cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
-net.bridge.bridge-nf-call-iptables  = 1
-net.bridge.bridge-nf-call-ip6tables = 1
-net.ipv4.ip_forward                 = 1
-EOF
-##カーネルパラメーターを適用
-sudo sysctl --system
-## containerdのインストール
-## リポジトリの追加
-apt-get update
-apt-get install ca-certificates curl
-install -m 0755 -d /etc/apt/keyrings
-curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
-chmod a+r /etc/apt/keyrings/docker.asc
-echo \
-  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian \
-  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
-  tee /etc/apt/sources.list.d/docker.list > /dev/null
-apt-get update
-apt-get install -y containerd.io
-containerd config default > /etc/containerd/config.toml
-## cgroupの設定
-## 以下の場所のSystemdCgroup = falseをtrueに変更
-# [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
-#  ...
-#  [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
-#    SystemdCgroup = true
-sed -i '/\[plugins\."io\.containerd\.grpc\.v1\.cri"\.containerd\.runtimes\.runc\.options\]/,/^$/s/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
-## containerdの再起動
-systemctl restart containerd
-## kubeadm、kubelet、kubectlのインストール
-apt-get update
-apt-get install -y apt-transport-https ca-certificates curl gpg
-curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.31/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.31/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
-apt-get update
-apt-get install -y kubelet kubeadm kubectl
-apt-mark hold kubelet kubeadm kubectl
-## クラスタへ参加
 ## コントロールプレーンノードで実行したkubeadm initの結果 kubeadm join ... を実行する
 kubeadm join ...
 ```
@@ -161,27 +130,41 @@ watch kubectl get pod -A -o wide
 ## rootユーザーに切り替える
 sudo su -
 mkdir /nfs
-dnf install nfs-utils
-systemctl enable --now nfs-server
+apt -y install nfs-kernel-server
 echo "/nfs 10.1.88.0/24(rw,sync,no_root_squash,no_subtree_check)" >> /etc/exports
 exportfs -a
 exportfs -v
-firewall-cmd --add-service=nfs --permanent
-firewall-cmd --reload
+systemctl enable --now nfs-server
 ```
+
+# NFSクライアントのセットアップ
+```
+## 全てのノードで実施
+apt -y install nfs-common
+```
+
 ## コントロールプレーンノードに戻って作業
 ```
 ## Helmのインストール
-cd /usr/local/bin
-wget https://get.helm.sh/helm-v3.13.2-linux-amd64.tar.gz
-tar -zxvf helm-v3.13.2-linux-amd64.tar.gz
-mv linux-amd64/helm /usr/local/bin/helm 
+curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 ## nfs-subdir-external-provisionerのインストール
 helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
-helm install nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner --set nfs.server=<nfsサーバのIPアドレス> --set nfs.path=/nfs
+helm install nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner --set nfs.server=10.1.88.101 --set nfs.path=/nfs --namespace nfs-provisioner --create-namespace
 ## MetalLBのインストール
-kubectl apply -f https://raw.githubusercontent.com/dodolia907/k8s/main/tyh/install/metallb/metallb.yaml
+# see what changes would be made, returns nonzero returncode if different
+kubectl get configmap kube-proxy -n kube-system -o yaml | \
+sed -e "s/strictARP: false/strictARP: true/" | \
+kubectl diff -f - -n kube-system
+
+# actually apply the changes, returns nonzero returncode on errors only
+kubectl get configmap kube-proxy -n kube-system -o yaml | \
+sed -e "s/strictARP: false/strictARP: true/" | \
+kubectl apply -f - -n kube-system
+
+kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.15.2/config/manifests/metallb-native.yaml
 kubectl apply -f https://raw.githubusercontent.com/dodolia907/k8s/main/tyh/install/metallb/metallb-ipaddresspool.yaml
+kubectl apply -f https://raw.githubusercontent.com/dodolia907/k8s/main/tyh/install/metallb/metallb-l2advertisement.yaml
+
 ## Nginx Ingress Controllerのインストール
 helm upgrade --install ingress-nginx ingress-nginx \
   --repo https://kubernetes.github.io/ingress-nginx \
@@ -192,7 +175,7 @@ kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/st
 kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}'
 kubectl patch svc argocd-server -n argocd -p '{"metadata": {"annotations": {"external-dns.alpha.kubernetes.io/hostname": "argocd.k8s.ddlia.com"}}}'
 cd /usr/local/bin
-curl -L https://github.com/argoproj/argo-cd/releases/download/v2.11.8/argocd-linux-amd64 -o argocd
+curl -L https://github.com/argoproj/argo-cd/releases/download/v3.1.7/argocd-linux-amd64 -o argocd
 chmod +x argocd
 argocd admin initial-password -n argocd
 argocd login argocd.k8s.ddlia.com
