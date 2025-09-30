@@ -173,28 +173,30 @@ helm upgrade --install ingress-nginx ingress-nginx \
 kubectl create namespace argocd
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}'
-kubectl patch svc argocd-server -n argocd -p '{"metadata": {"annotations": {"external-dns.alpha.kubernetes.io/hostname": "argocd.k8s.ddlia.com"}}}'
+kubectl patch svc argocd-server -n argocd -p '{"metadata": {"annotations": {"external-dns.alpha.kubernetes.io/hostname": "cd.k8s.ddlia.com"}}}'
 cd /usr/local/bin
 curl -L https://github.com/argoproj/argo-cd/releases/download/v3.1.7/argocd-linux-amd64 -o argocd
 chmod +x argocd
 argocd admin initial-password -n argocd
 argocd login argocd.k8s.ddlia.com
 argocd account update-password
-## cert-managerのインストール
-helm repo add jetstack https://charts.jetstack.io --force-update
-helm install \
-cert-manager jetstack/cert-manager \
---namespace cert-manager \
---create-namespace \
---version v1.15.3 \
---set crds.enabled=true
-## Rancherのインストール
-helm repo add rancher-stable https://releases.rancher.com/server-charts/stable
-kubectl create namespace cattle-system
-helm install rancher rancher-stable/rancher --namespace cattle-system --set hostname=rancher.k8s.ddlia.com"}}}' --set bootstrapPassword=admin
-kubectl patch svc rancher -n cattle-system -p '{"spec": {"type": "LoadBalancer"}}'
-kubectl patch svc rancher -n cattle-system -p '{"metadata": {"annotations": {"external-dns.alpha.kubernetes.io/hostname": "rancher.k8s.ddlia.com"}}}'
-```
+
+## kubernetes-dashboardのインストール
+## https://kubernetes.io/docs/tasks/access-application-cluster/web-ui-dashboard/  
+# Add kubernetes-dashboard repository
+helm repo add kubernetes-dashboard https://kubernetes.github.io/dashboard/
+# Deploy a Helm Release named "kubernetes-dashboard" using the kubernetes-dashboard chart
+helm upgrade --install kubernetes-dashboard kubernetes-dashboard/kubernetes-dashboard --create-namespace --namespace kubernetes-dashboard
+kubectl patch svc kubernetes-dashboard-kong-proxy -n kubernetes-dashboard -p '{"spec": {"type": "LoadBalancer"}}'
+kubectl patch svc kubernetes-dashboard-kong-proxy -n kubernetes-dashboard -p '{"metadata": {"annotations": {"external-dns.alpha.kubernetes.io/hostname": "dash.k8s.ddlia.com"}}}'
+
+## cloudflaredのインストール
+kubectl create namespace cloudflare
+wget https://raw.githubusercontent.com/dodolia907/k8s/main/tyh/install/cloudflared/token.yaml
+echo "<your_tunnel_token>" | base64
+vim token.yaml  ## 先ほどのbase64エンコードしたトークンに書き換え
+kubectl apply -f token.yaml
+kubectl apply -f https://raw.githubusercontent.com/dodolia907/k8s/main/tyh/install/cloudflared/tunnel.yaml
 
 # リセット
 ```
