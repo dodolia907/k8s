@@ -12,11 +12,11 @@ spec:
       blockSize: 26
       cidr: 10.8.0.0/16
       encapsulation: VXLANCrossSubnet
-      natOutgoing: Disabled
+      natOutgoing: Enabled
       nodeSelector: all()
     - name: default-ipv6-ippool
       blockSize: 122
-      cidr: fdf6:ad60:1db0::/64
+      cidr: fdf6:ad60:1db0:feed::/64
       encapsulation: VXLANCrossSubnet
       natOutgoing: Enabled
       nodeSelector: all()

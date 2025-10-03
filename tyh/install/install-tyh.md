@@ -42,7 +42,7 @@ systemctl start crio.service
 ```
 ## kubeadm join... と表示されるので、後でワーカーノードで使うためにメモしておく
 ## pod-network-cidrは他と被らない任意のCIDRを指定する
-kubeadm init --pod-network-cidr=10.8.0.0/16,fdf6:ad60:1db0::/64 --service-cidr=10.88.0.0/16,<NTT-NGN RA Prefix>:feed::/112
+kubeadm init --pod-network-cidr=10.8.0.0/16,fdf6:ad60:1db0:feed::/64 --service-cidr=10.96.0.0/16,fdf6:ad60:1db0:beef::/112
 ## kubectlをroot以外のユーザーでも使えるようにする
 mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
@@ -163,7 +163,6 @@ kubectl apply -f - -n kube-system
 
 kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.15.2/config/manifests/metallb-native.yaml
 kubectl apply -f https://raw.githubusercontent.com/dodolia907/k8s/main/tyh/install/metallb/metallb-ipaddresspool.yaml
-kubectl apply -f https://raw.githubusercontent.com/dodolia907/k8s/main/tyh/install/metallb/metallb-l2advertisement.yaml
 
 ## Nginx Ingress Controllerのインストール
 helm upgrade --install ingress-nginx ingress-nginx \
@@ -178,7 +177,7 @@ cd /usr/local/bin
 curl -L https://github.com/argoproj/argo-cd/releases/download/v3.1.7/argocd-linux-amd64 -o argocd
 chmod +x argocd
 argocd admin initial-password -n argocd
-argocd login argocd.k8s.ddlia.com
+argocd login cd.k8s.ddlia.com
 argocd account update-password
 
 ## kubernetes-dashboardのインストール
