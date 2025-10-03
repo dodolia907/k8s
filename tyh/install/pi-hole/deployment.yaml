@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pihole-deployment
+  labels:
+    app: pihole
+  namespace: pi-hole
+spec:
+  selector:
+    matchLabels:
+      app: pihole
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: pihole
+    spec:
+      securityContext:
+        runAsUser: 0
+        runAsGroup: 0
+        fsGroup: 0
+
+      initContainers:
+      - name: init-sync
+        image: docker.io/busybox:stable
+        command: ["/bin/sh", "-c"]
+        args: ["cp -r /mnt-pvc/* /etc/pihole/ || true"]
+        volumeMounts:
+        - name: pihole-pvc
+          mountPath: /mnt-pvc
+        - name: pihole-data
+          mountPath: /etc/pihole
+
+      containers:
+      - name: pihole
+        image: ghcr.io/pi-hole/pihole:latest
+        securityContext:
+          capabilities:
+            add:
+              - NET_ADMIN
+              - SYS_TIME
+              - SYS_NICE
+              - SETFCAP
+        ports:
+        - containerPort: 53
+        - containerPort: 80
+        - containerPort: 443
+        env:
+        - name: TZ
+          value: "Asia/Tokyo"
+        - name: FTLCONF_NTP_ENABLED
+          value: "false"
+        volumeMounts:
+        - name: pihole-data
+          mountPath: /etc/pihole
+        - name: dnsmasq-data
+          mountPath: /etc/dnsmasq.d
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh", "-c", "cp -r /etc/pihole/* /mnt-pvc/"]
+        volumeMounts:
+        - name: pihole-data
+          mountPath: /etc/pihole
+        - name: dnsmasq-data
+          mountPath: /etc/dnsmasq.d
+        - name: pihole-pvc
+          mountPath: /mnt-pvc
+
+      volumes:
+      - name: pihole-data
+        emptyDir: {}
+      - name: dnsmasq-data
+        emptyDir: {}
+      - name: pihole-pvc
+        persistentVolumeClaim:
+          claimName: pihole-pvc
