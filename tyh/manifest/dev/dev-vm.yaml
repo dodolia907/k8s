@@ -1,0 +1,59 @@
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+  name: dev
+  namespace: dev
+  labels:
+    kubevirt.io/os: linux
+spec:
+  runStrategy: Always
+  template:
+    spec:
+      domain:
+        cpu:
+          cores: 2
+        devices:
+          disks:
+          - disk:
+              bus: virtio
+            name: disk0
+          - cdrom:
+              bus: sata
+              readonly: true
+            name: cloudinitdisk
+          interfaces:
+          - name: default
+            masquerade: {}
+        machine:
+          type: q35
+        resources:
+          requests:
+            memory: 1024M
+      networks:
+      - name: default
+        pod: {}
+      volumes:
+      - name: disk0
+        persistentVolumeClaim:
+          claimName: dev-pvc
+      - cloudInitNoCloud:
+          userData: |
+            #cloud-config
+            hostname: dev
+            ssh_pwauth: no
+            users:
+            - name: debian
+              ssh_import_id: gh:dodolia907
+              lock_passwd: false
+              shell: /bin/bash
+              sudo: ALL=(ALL) NOPASSWD:ALL
+              uid: 1000
+            runcmd:
+            - sed -i -e 's/^#PermitRootLogin prohibit-password/PermitRootLogin no/' /etc/ssh/sshd_config
+            - systemctl reload ssh
+          networkData: |
+            version: 2
+            ethernets: 
+              enp1s0:
+                dhcp4: true
+        name: cloudinitdisk
