@@ -197,6 +197,21 @@ vim token.yaml  ## 先ほどのbase64エンコードしたトークンに書き�
 kubectl apply -f token.yaml
 kubectl apply -f https://raw.githubusercontent.com/dodolia907/k8s/main/tyh/install/cloudflared/tunnel.yaml
 
+## KubeVirtのインストール
+export RELEASE=$(curl https://storage.googleapis.com/kubevirt-prow/release/kubevirt/kubevirt/stable.txt)
+kubectl apply -f https://github.com/kubevirt/kubevirt/releases/download/${RELEASE}/kubevirt-operator.yaml
+kubectl apply -f https://github.com/kubevirt/kubevirt/releases/download/${RELEASE}/kubevirt-cr.yaml
+## virtctlのインストール
+export VERSION=$(curl https://storage.googleapis.com/kubevirt-prow/release/kubevirt/kubevirt/stable.txt)
+curl -L https://github.com/kubevirt/kubevirt/releases/download/${VERSION}/virtctl-${VERSION}-linux-amd64 -o virtctl
+sudo mv virtctl /usr/local/bin/
+sudo chmod +x /usr/local/bin/virtctl
+## Containerized Data Importerのインストール
+export VERSION=$(basename $(curl -s -w %{redirect_url} https://github.com/kubevirt/containerized-data-importer/releases/latest))
+kubectl create -f https://github.com/kubevirt/containerized-data-importer/releases/download/$VERSION/cdi-operator.yaml
+kubectl create -f https://github.com/kubevirt/containerized-data-importer/releases/download/$VERSION/cdi-cr.yaml
+```
+
 # リセット
 ```
 kubeadm reset
@@ -212,3 +227,7 @@ https://kubernetes.io/ja/docs/setup/production-environment/tools/kubeadm/install
 https://kubernetes.io/ja/docs/setup/production-environment/container-runtimes/  
 https://kubernetes.io/ja/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/  
 https://kubernetes.io/docs/setup/production-environment/container-runtimes/#containerd-systemd  
+
+https://kubevirt.io/user-guide/cluster_admin/installation/#installing-kubevirt-on-kubernetes  
+https://kubevirt.io/user-guide/user_workloads/virtctl_client_tool/  
+https://kubevirt.io/labs/kubernetes/lab2.html
