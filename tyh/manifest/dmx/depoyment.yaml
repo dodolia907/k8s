@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qlc
+  namespace: qlc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: qlc
+  template:
+    metadata:
+      labels:
+        app: qlc
+    spec:
+      nodeName: wk03
+      containers:
+      - name: qlc
+        image: ghcr.io/technotut/qlcplus-artnet-to-dmx-converter:main
+        securityContext:
+          privileged: true
+        ports:
+        - containerPort: 6454
+        - containerPort: 9999
+        volumeMounts:
+        - name: qlc-hostpath
+          mountPath: /dev/ttyUSB0
+      volumes:
+      - name: qlc-hostpath
+        hostPath:
+          path: /dev/ttyUSB0
