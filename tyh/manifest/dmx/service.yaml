@@ -9,7 +9,6 @@ spec:
   selector:
     app: qlc
   type: LoadBalancer
-  loadBalancerIP: 10.11.240.254
   ports:
   - name: artnet
     protocol: UDP
