@@ -4,7 +4,7 @@ metadata:
   name: murchace
   namespace: murchace
 spec:
-  ingressClassName: "cloudflare"
+  ingressClassName: "cloudflare-tunnel"
   rules:
   - host: murchace.ddlia.com
     http:
