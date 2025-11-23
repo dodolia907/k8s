@@ -1,0 +1,18 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: murchace
+  namespace: murchace
+spec:
+  ingressClassName: "cloudflare"
+  rules:
+  - host: murchace.ddlia.com
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: murchace
+            port:
+              number: 80
