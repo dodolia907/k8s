@@ -17,6 +17,8 @@ cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
 net.bridge.bridge-nf-call-iptables  = 1
 net.bridge.bridge-nf-call-ip6tables = 1
 net.ipv4.ip_forward                 = 1
+net.ipv6.conf.all.forwarding = 1
+net.ipv6.conf.default.forwarding = 1
 EOF
 
 # 再起動せずにカーネルパラメーターを適用
@@ -25,7 +27,7 @@ sudo sysctl --system
 lsmod | grep br_netfilter
 lsmod | grep overlay
 
-sysctl net.bridge.bridge-nf-call-iptables net.bridge.bridge-nf-call-ip6tables net.ipv4.ip_forward
+sysctl net.bridge.bridge-nf-call-iptables net.bridge.bridge-nf-call-ip6tables net.ipv4.ip_forward net.ipv6.conf.all.forwarding net.ipv6.conf.default.forwarding
 ```
 CRI-Oのインストール  
 https://github.com/cri-o/packaging/blob/main/README.md#usage
@@ -58,13 +60,15 @@ EOF
 sudo dnf install -y container-selinux
 sudo dnf install -y cri-o kubelet kubeadm kubectl
 sudo systemctl enable --now crio.service
+sudo systemctl enable kubelet.service
+sudo systemctl disable --now firewalld
 ```
 
 ## クラスタの初期化
 ```
 ## kubeadm join... と表示されるので、後でワーカーノードで使うためにメモしておく
 ## pod-network-cidrは他と被らない任意のCIDRを指定する
-kubeadm init --pod-network-cidr=10.8.0.0/16,fdf6:ad60:1db0:feed::/64 --service-cidr=10.96.0.0/16,fdf6:ad60:1db0:beef::/112
+sudo kubeadm init --pod-network-cidr=10.8.0.0/16,fdf6:ad60:1db0:feed::/56 --service-cidr=10.96.0.0/12,fdf6:ad60:1db0:beef::/112 --skip-phases=addon/kube-proxy
 ## kubectlをroot以外のユーザーでも使えるようにする
 mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
