@@ -1,41 +1,63 @@
 # Kubernetesのセットアップ  
-Debian 13にて動作確認済み  
+AlmaLinux 9を使用する． 
 ## コンテナランタイムの準備  
+全てのノードで実施する．  
 ```
-## 全てのノードで実施  
-## rootユーザーに切り替える
-sudo su -
 ## IPv4フォワーディングを有効化、iptablesからブリッジされたトラフィックを見えるようにする
 cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf
 overlay
 br_netfilter
 EOF
+
 sudo modprobe overlay
 sudo modprobe br_netfilter
+
+# この構成に必要なカーネルパラメーター、再起動しても値は永続します
 cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
 net.bridge.bridge-nf-call-iptables  = 1
 net.bridge.bridge-nf-call-ip6tables = 1
 net.ipv4.ip_forward                 = 1
-net.ipv6.conf.all.forwarding        = 1
 EOF
-##カーネルパラメーターを適用
-sysctl --system
-## CRI-Oのインストール
+
+# 再起動せずにカーネルパラメーターを適用
+sudo sysctl --system
+
+lsmod | grep br_netfilter
+lsmod | grep overlay
+
+sysctl net.bridge.bridge-nf-call-iptables net.bridge.bridge-nf-call-ip6tables net.ipv4.ip_forward
+```
+CRI-Oのインストール  
+https://github.com/cri-o/packaging/blob/main/README.md#usage
+```
 ## リポジトリの追加
-KUBERNETES_VERSION=v1.34
-CRIO_VERSION=v1.34
-curl -fsSL https://pkgs.k8s.io/core:/stable:/$KUBERNETES_VERSION/deb/Release.key |
-    gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/$KUBERNETES_VERSION/deb/ /" |
-    tee /etc/apt/sources.list.d/kubernetes.list
-curl -fsSL https://download.opensuse.org/repositories/isv:/cri-o:/stable:/$CRIO_VERSION/deb/Release.key |
-    gpg --dearmor -o /etc/apt/keyrings/cri-o-apt-keyring.gpg
-echo "deb [signed-by=/etc/apt/keyrings/cri-o-apt-keyring.gpg] https://download.opensuse.org/repositories/isv:/cri-o:/stable:/$CRIO_VERSION/deb/ /" |
-    tee /etc/apt/sources.list.d/cri-o.list
+KUBERNETES_VERSION=v1.36
+CRIO_VERSION=v1.35
+
+cat <<EOF | sudo tee /etc/yum.repos.d/kubernetes.repo
+[kubernetes]
+name=Kubernetes
+baseurl=https://pkgs.k8s.io/core:/stable:/$KUBERNETES_VERSION/rpm/
+enabled=1
+gpgcheck=1
+gpgkey=https://pkgs.k8s.io/core:/stable:/$KUBERNETES_VERSION/rpm/repodata/repomd.xml.key
+EOF
+
+cat <<EOF | sudo tee /etc/yum.repos.d/cri-o.repo
+[cri-o]
+name=CRI-O
+baseurl=https://download.opensuse.org/repositories/isv:/cri-o:/stable:/$CRIO_VERSION/rpm/
+enabled=1
+gpgcheck=1
+gpgkey=https://download.opensuse.org/repositories/isv:/cri-o:/stable:/$CRIO_VERSION/rpm/repodata/repomd.xml.key
+EOF
+```
+
 ## kubeadm、kubelet、kubectlのインストール
-apt-get update
-apt-get install -y cri-o kubelet kubeadm kubectl
-systemctl start crio.service
+```
+sudo dnf install -y container-selinux
+sudo dnf install -y cri-o kubelet kubeadm kubectl
+sudo systemctl enable --now crio.service
 ```
 
 ## クラスタの初期化
