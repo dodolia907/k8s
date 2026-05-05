@@ -94,6 +94,7 @@ cilium install \
   --set ipv4.enabled=true \
   --set ipv6.enabled=true \
   --set routingMode=native \
+  --set ipam.mode=kubernetes \
   --set ipv4NativeRoutingCIDR="10.8.0.0/16" \
   --set ipv6NativeRoutingCIDR="fdf6:ad60:1db0:feed::/56" \
   --set kubeProxyReplacement=true \
@@ -107,7 +108,13 @@ cilium install \
 
 ## 一旦確認
 ```
+cilium status --wait
 watch kubectl get pod -A -o wide
+```
+
+## テスト
+```
+cilium connectivity test
 ```
 
 ## ワーカーノードのクラスタへの参加
@@ -228,11 +235,11 @@ kubectl create -f https://github.com/kubevirt/containerized-data-importer/releas
 
 # リセット
 ```
-kubeadm reset
+sudo kubeadm reset
 ## 手順が表示されるので従う
-rm -rf /etc/cni/net.d
-rm -rf $HOME/.kube/config
-iptables -F
+sudo rm -rf /etc/cni/net.d
+sudo rm -rf $HOME/.kube/config
+sudo iptables -F
 sudo reboot
 ```
 
