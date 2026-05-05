@@ -76,39 +76,35 @@ sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ```
 
 ## ネットワークのセットアップ
-```  
-## SSHで一般ユーザーとしてコントロールプレーンノードに接続し、インストール
-kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.30.3/manifests/operator-crds.yaml
-kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.30.3/manifests/tigera-operator.yaml
+Ciliumを使用する．  
+Cilium CLIのインストール
 ```
-## calicoctlのインストール
+CILIUM_CLI_VERSION=$(curl -s https://raw.githubusercontent.com/cilium/cilium-cli/main/stable.txt)
+CLI_ARCH=amd64
+if [ "$(uname -m)" = "aarch64" ]; then CLI_ARCH=arm64; fi
+curl -L --fail --remote-name-all https://github.com/cilium/cilium-cli/releases/download/${CILIUM_CLI_VERSION}/cilium-linux-${CLI_ARCH}.tar.gz{,.sha256sum}
+sha256sum --check cilium-linux-${CLI_ARCH}.tar.gz.sha256sum
+sudo tar xzvfC cilium-linux-${CLI_ARCH}.tar.gz /usr/local/bin
+rm cilium-linux-${CLI_ARCH}.tar.gz{,.sha256sum}
 ```
-## PATHの通っているディレクトリに移動
-cd /usr/local/bin
-## calicoctlのダウンロード
-sudo curl -L https://github.com/projectcalico/calico/releases/download/v3.30.3/calicoctl-linux-amd64 -o calicoctl
-## 実行権限の付与
-sudo chmod +x ./calicoctl
+
+Ciliumのインストール
 ```
-## Calicoの設定
+cilium install \
+  --set ipv4.enabled=true \
+  --set ipv6.enabled=true \
+  --set routingMode=native \
+  --set ipv4NativeRoutingCIDR="10.8.0.0/16" \
+  --set ipv6NativeRoutingCIDR="fdf6:ad60:1db0:feed::/56" \
+  --set kubeProxyReplacement=true \
+  --set l2announcements.enabled=true \
+  --set bgpControlPlane.enabled=true \
+  --set k8sRequireIPv4PodCIDR=true \
+  --set k8sRequireIPv6PodCIDR=true \
+  --set devices=enp3s0
 ```
-## コントロールプレーンの適当なディレクトリに移動し、適当にディレクトリを作成　(必須ではない)
-cd ~
-mkdir manifests
-cd manifests
-## Calicoの設定ファイルをダウンロード
-wget https://raw.githubusercontent.com/dodolia907/k8s/main/tyh/install/calico/custom-resources.yaml
-wget https://raw.githubusercontent.com/dodolia907/k8s/main/tyh/install/calico/bgppeer.yaml
-wget https://raw.githubusercontent.com/dodolia907/k8s/main/tyh/install/calico/config.yaml
-## CIDRやAS番号など、環境に合わせて編集
-vim custom-resources.yaml
-vim bgppeer.yaml
-vim config.yaml
-## 設定適用
-kubectl create -f custom-resources.yaml
-calicoctl apply -f bgppeer.yaml
-calicoctl apply -f config.yaml
-```
+
+
 ## 一旦確認
 ```
 watch kubectl get pod -A -o wide
@@ -141,14 +137,6 @@ write memory
 show ip bgp summary
 ```
 
-## 確認
-```
-calicoctl get nodes -o wide
-calicoctl get bgpPeer -o wide
-calicoctl get ippool -o wide
-calicoctl get bgpConfiguration -o wide
-watch kubectl get pod -A -o wide
-```
 
 # NFSサーバのセットアップ
 ```
