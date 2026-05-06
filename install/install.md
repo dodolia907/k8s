@@ -103,7 +103,13 @@ cilium install \
   --set bgpControlPlane.enabled=true \
   --set k8sRequireIPv4PodCIDR=true \
   --set k8sRequireIPv6PodCIDR=true \
-  --set devices=enp3s0
+  --set hubble.relay.enabled=true \
+  --set hubble.ui.enabled=true \
+  --set devices=enp3s0 \
+  --set enableIPv4Masquerade=false \
+  --set enableIPv6Masquerade=true \
+  --set k8sServiceHost=10.1.88.101 \
+  --set k8sServicePort=6443
 ```
 
 
@@ -172,24 +178,7 @@ curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 ## nfs-subdir-external-provisionerのインストール
 helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
 helm install nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner --set nfs.server=10.1.88.101 --set nfs.path=/nfs --namespace nfs-provisioner --create-namespace
-## MetalLBのインストール
-# see what changes would be made, returns nonzero returncode if different
-kubectl get configmap kube-proxy -n kube-system -o yaml | \
-sed -e "s/strictARP: false/strictARP: true/" | \
-kubectl diff -f - -n kube-system
 
-# actually apply the changes, returns nonzero returncode on errors only
-kubectl get configmap kube-proxy -n kube-system -o yaml | \
-sed -e "s/strictARP: false/strictARP: true/" | \
-kubectl apply -f - -n kube-system
-
-kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.15.2/config/manifests/metallb-native.yaml
-kubectl apply -f https://raw.githubusercontent.com/dodolia907/k8s/main/tyh/install/metallb/metallb-ipaddresspool.yaml
-
-## Nginx Ingress Controllerのインストール
-helm upgrade --install ingress-nginx ingress-nginx \
-  --repo https://kubernetes.github.io/ingress-nginx \
-  --namespace ingress-nginx --create-namespace
 ## ArgoCDのインストール
 kubectl create namespace argocd
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
@@ -201,15 +190,6 @@ chmod +x argocd
 argocd admin initial-password -n argocd
 argocd login cd.k8s.ddlia.com
 argocd account update-password
-
-## kubernetes-dashboardのインストール
-## https://kubernetes.io/docs/tasks/access-application-cluster/web-ui-dashboard/  
-# Add kubernetes-dashboard repository
-helm repo add kubernetes-dashboard https://kubernetes.github.io/dashboard/
-# Deploy a Helm Release named "kubernetes-dashboard" using the kubernetes-dashboard chart
-helm upgrade --install kubernetes-dashboard kubernetes-dashboard/kubernetes-dashboard --create-namespace --namespace kubernetes-dashboard
-kubectl patch svc kubernetes-dashboard-kong-proxy -n kubernetes-dashboard -p '{"spec": {"type": "LoadBalancer"}}'
-kubectl patch svc kubernetes-dashboard-kong-proxy -n kubernetes-dashboard -p '{"metadata": {"annotations": {"external-dns.alpha.kubernetes.io/hostname": "dash.k8s.ddlia.com"}}}'
 
 ## cloudflaredのインストール
 kubectl create namespace cloudflare
