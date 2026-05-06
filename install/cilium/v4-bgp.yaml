@@ -1,0 +1,52 @@
+apiVersion: "cilium.io/v2"
+kind: CiliumBGPPeerConfig
+metadata:
+  name: bgp-peer-config-fortigate
+spec:
+  timers:
+    holdTimeSeconds: 90
+    keepAliveTimeSeconds: 30
+  families:
+  - afi: ipv4
+    safi: unicast
+    advertisements:
+      matchLabels:
+        advertise: bgp-v4-services
+
+---
+
+apiVersion: "cilium.io/v2"
+kind: CiliumBGPClusterConfig
+metadata:
+  name: bgp-cluster-config
+spec:
+  nodeSelector:
+    matchLabels:
+      kubernetes.io/os: linux
+  bgpInstances:
+  - name: "ipv4-bgp"
+    localASN: 64512
+    peers:
+    - name: "fortigate"
+      peerAddress: "10.1.0.1" 
+      peerASN: 65000
+      peerConfigRef:
+        name: bgp-peer-config-fortigate
+
+---
+apiVersion: "cilium.io/v2"
+kind: CiliumBGPAdvertisement
+metadata:
+  name: bgp-adv-ipv4
+  labels:
+    advertise: bgp-v4-services
+spec:
+  advertisements:
+  - advertisementType: "Service"
+    selector:
+      matchLabels:
+        announce: bgp-v4 
+    service:
+      addresses:
+      - LoadBalancerIP
+  - advertisementType: "PodCIDR"
