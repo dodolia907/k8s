@@ -97,6 +97,7 @@ cilium install \
   --set ipam.mode=kubernetes \
   --set ipv4NativeRoutingCIDR="10.8.0.0/16" \
   --set ipv6NativeRoutingCIDR="fdf6:ad60:1db0:feed::/56" \
+  --set autoDirectNodeRoutes=true \
   --set kubeProxyReplacement=true \
   --set l2announcements.enabled=true \
   --set bgpControlPlane.enabled=true \
