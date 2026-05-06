@@ -1,0 +1,17 @@
+apiVersion: "cilium.io/v2"
+kind: CiliumLoadBalancerIPPool
+metadata:
+  name: ipv4-bgp-pool
+spec:
+  blocks:
+    - cidr: "10.88.0.0/16"
+
+---
+
+apiVersion: "cilium.io/v2"
+kind: CiliumLoadBalancerIPPool
+metadata:
+  name: ipv6-ndp-pool
+spec:
+  blocks:
+    - cidr: "<NGN-RA-PREFIX>::beef:0/112"
