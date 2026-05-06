@@ -91,6 +91,7 @@ rm cilium-linux-${CLI_ARCH}.tar.gz{,.sha256sum}
 Ciliumのインストール
 ```
 cilium install \
+  --version 1.19.3 \
   --set ipv4.enabled=true \
   --set ipv6.enabled=true \
   --set routingMode=native \
