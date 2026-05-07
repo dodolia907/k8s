@@ -6,7 +6,7 @@ metadata:
     app: pihole
   namespace: pi-hole
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: pihole.k8s.ddlia.com
+    external-dns.alpha.kubernetes.io/hostname: ns0.svc.ddlia.com
     io.cilium/lb-ipam-ips: "fd00:20::beef:ffff"
 spec:
   selector:
