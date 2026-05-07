@@ -4,10 +4,15 @@ metadata:
   name: speedtest-service-v6
   labels:
     app: speedtest
+    io.cilium/lb-pool: ula
   namespace: speedtest
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: speed.k8s.ddlia.com
+    external-dns.alpha.kubernetes.io/hostname: speedtest.svc.ddlia.com
+    external-dns.alpha.kubernetes.io/provider: "pihole"
 spec:
+  ipFamilyPolicy: SingleStack
+  ipFamilies:
+  - IPv6
   selector:
     app: speedtest
   type: LoadBalancer

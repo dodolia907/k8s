@@ -4,9 +4,11 @@ metadata:
   name: speedtest-service
   labels:
     app: speedtest
+    announce: bgp-v4
   namespace: speedtest
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: speed.k8s.ddlia.com
+    external-dns.alpha.kubernetes.io/hostname: speedtest.svc.ddlia.com
+    external-dns.alpha.kubernetes.io/provider: "pihole"
 spec:
   selector:
     app: speedtest
