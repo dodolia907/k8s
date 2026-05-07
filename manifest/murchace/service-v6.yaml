@@ -5,7 +5,7 @@ metadata:
   namespace: murchace
   annotations:
     external-dns.alpha.kubernetes.io/hostname: murchace.svc.ddlia.com
-    io.cilium/lb-ipam-pools: "internal"
+    io.cilium/lb-ipam-pools: "ipv6-ndp-pool-ula"
 spec:
   ipFamilyPolicy: SingleStack
   ipFamilies:
