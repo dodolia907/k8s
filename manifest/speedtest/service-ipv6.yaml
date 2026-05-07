@@ -16,9 +16,6 @@ spec:
   selector:
     app: speedtest
   type: LoadBalancer
-  ipFamilies:
-    - IPv6
-  ipFamilyPolicy: SingleStack
   ports:
     - name: http
       protocol: TCP
