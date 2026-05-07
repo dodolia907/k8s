@@ -168,14 +168,32 @@ sudo systemctl enable --now rpcbind nfs-server
 sudo dnf install -y nfs-utils
 ```
 
-## コントロールプレーンノードに戻って作業
+# nfs-subdir-external-provisionerのインストール
 ```
 ## Helmのインストール
 curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 ## nfs-subdir-external-provisionerのインストール
 helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
 helm install nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner --set nfs.server=10.1.88.101 --set nfs.path=/ext --namespace nfs-provisioner --create-namespace
+```
 
+# pi-holeのインストール
+```
+git clone https://github.com/dodolia907/k8s.git
+cd ~/k8s/install/pi-hole
+kubectl create ns pi-hole
+kubectl apply -f .
+```
+
+# external-dnsのインストール
+```
+## 宅内環境
+cd ~/k8s/install/external-dns
+kubectl create ns external-dns
+kubectl apply -f manifest.yaml
+```
+
+```
 ## ArgoCDのインストール
 kubectl create namespace argocd
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
