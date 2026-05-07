@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: rtmp-service
+  name: rtmp-service-v6
   labels:
     app: rtmp-live-server
   namespace: live
