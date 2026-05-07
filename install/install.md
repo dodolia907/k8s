@@ -156,20 +156,16 @@ show ip bgp summary
 # NFSサーバのセットアップ
 ```
 ## NFSサーバにSSH接続する
-## rootユーザーに切り替える
-sudo su -
-mkdir /nfs
-apt -y install nfs-kernel-server
-echo "/nfs 10.1.88.0/24(rw,sync,no_root_squash,no_subtree_check)" >> /etc/exports
-exportfs -a
-exportfs -v
-systemctl enable --now nfs-server
+mkdir -p /ext
+sudo dnf install -y nfs-utils
+echo "/ext 10.1.88.0/24(rw,sync,no_root_squash,no_subtree_check)" | sudo tee -a /etc/exports
+sudo systemctl enable --now rpcbind nfs-server
 ```
 
 # NFSクライアントのセットアップ
 ```
 ## 全てのノードで実施
-apt -y install nfs-common
+sudo dnf install -y nfs-utils
 ```
 
 ## コントロールプレーンノードに戻って作業
@@ -178,7 +174,7 @@ apt -y install nfs-common
 curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 ## nfs-subdir-external-provisionerのインストール
 helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
-helm install nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner --set nfs.server=10.1.88.101 --set nfs.path=/nfs --namespace nfs-provisioner --create-namespace
+helm install nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner --set nfs.server=10.1.88.101 --set nfs.path=/ext --namespace nfs-provisioner --create-namespace
 
 ## ArgoCDのインストール
 kubectl create namespace argocd
