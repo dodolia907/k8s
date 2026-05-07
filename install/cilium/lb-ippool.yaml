@@ -14,7 +14,10 @@ metadata:
   name: ipv6-ndp-pool-gua
 spec:
   blocks:
-    - cidr: "<NGN-Prefix>::beef:0/112"
+    - cidr: "<NGN-Prefix>::beef:1/112"
+  serviceSelector:
+    matchLabels:
+      io.cilium/lb-pool: gua
     
 ---
 
@@ -24,4 +27,7 @@ metadata:
   name: ipv6-ndp-pool-ula
 spec:
   blocks:
-    - cidr: "fd00:20::beef:0/112"
+    - cidr: "fd00:20::beef:1/112"
+  serviceSelector:
+    matchLabels:
+      io.cilium/lb-pool: ula

@@ -4,10 +4,10 @@ metadata:
   name: rtmp-service-v6
   labels:
     app: rtmp-live-server
+    io.cilium/lb-pool: ula
   namespace: live
   annotations:
     external-dns.alpha.kubernetes.io/hostname: live.svc.ddlia.com
-    io.cilium/lb-ipam-pools: "ipv6-ndp-pool-ula"
 spec:
   ipFamilyPolicy: SingleStack
   ipFamilies:

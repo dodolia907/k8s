@@ -2,10 +2,11 @@ apiVersion: v1
 kind: Service
 metadata:
   name: murchace-v6
+  labels:
+    io.cilium/lb-pool: ula
   namespace: murchace
   annotations:
     external-dns.alpha.kubernetes.io/hostname: murchace.svc.ddlia.com
-    io.cilium/lb-ipam-pools: "ipv6-ndp-pool-ula"
 spec:
   ipFamilyPolicy: SingleStack
   ipFamilies:
