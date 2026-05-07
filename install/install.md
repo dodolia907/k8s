@@ -209,14 +209,15 @@ argocd login cd.svc.ddlia.com
 argocd account update-password
 ```
 
-```
+
 ## cloudflaredのインストール
+```
+cd ~/k8s/install/cloudflared
 kubectl create namespace cloudflare
-wget https://raw.githubusercontent.com/dodolia907/k8s/main/tyh/install/cloudflared/token.yaml
-echo "<your_tunnel_token>" | base64
-vim token.yaml  ## 先ほどのbase64エンコードしたトークンに書き換え
+vim token.yaml
 kubectl apply -f token.yaml
-kubectl apply -f https://raw.githubusercontent.com/dodolia907/k8s/main/tyh/install/cloudflared/tunnel.yaml
+kubectl apply -f tunnel.yaml
+```
 
 ## KubeVirtのインストール
 export RELEASE=$(curl https://storage.googleapis.com/kubevirt-prow/release/kubevirt/kubevirt/stable.txt)
