@@ -189,8 +189,12 @@ kubectl apply -f .
 ```
 ## 宅内環境
 cd ~/k8s/install/external-dns
-kubectl create ns external-dns
-kubectl apply -f manifest.yaml
+kubectl apply -f pi-hole.yaml
+
+## Cloudflare IPv6 DNS
+## Zone/DNS/Edit，Zone/Zone/Readの権限を持つAPIトークンを作成する．
+kubectl create secret generic cloudflare-api-key --from-literal=apiKey=YOUR_API_TOKEN -n cloudflare
+kubectl apply -f cloudflare.yaml
 ```
 
 ## ArgoCDのインストール
@@ -199,6 +203,7 @@ kubectl create namespace argocd
 kubectl apply -n argocd --server-side --force-conflicts -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.4.1/manifests/install.yaml
 kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}'
 kubectl patch svc argocd-server -n argocd -p '{"metadata": {"labels": {"announce": "bgp-v4"}}}'
+kubectl patch svc argocd-server -n argocd -p '{"metadata": {"annotations": {"external-dns.alpha.kubernetes.io/provider": "pihole"}}}'
 kubectl patch svc argocd-server -n argocd -p '{"metadata": {"annotations": {"external-dns.alpha.kubernetes.io/hostname": "cd.svc.ddlia.com"}}}'
 cd /usr/local/bin
 sudo curl -L https://github.com/argoproj/argo-cd/releases/download/v3.4.1/argocd-linux-amd64 -o argocd
