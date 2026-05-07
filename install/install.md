@@ -193,7 +193,6 @@ kubectl create ns external-dns
 kubectl apply -f manifest.yaml
 ```
 
-
 ## ArgoCDのインストール
 ```
 kubectl create namespace argocd
@@ -208,7 +207,6 @@ argocd admin initial-password -n argocd
 argocd login cd.svc.ddlia.com
 argocd account update-password
 ```
-
 
 ## cloudflaredのインストール
 ```
