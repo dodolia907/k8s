@@ -7,6 +7,7 @@ metadata:
     announce: bgp-v4
   annotations:
     external-dns.alpha.kubernetes.io/hostname: murchace.svc.ddlia.com
+    external-dns.alpha.kubernetes.io/provider: "pihole"
 spec:
   selector:
     app: murchace

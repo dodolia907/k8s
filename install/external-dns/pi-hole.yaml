@@ -3,13 +3,13 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: external-dns
-  namespace: external-dns
+  namespace: pi-hole
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: external-dns
-  namespace: external-dns
+  namespace: pi-hole
 rules:
 - apiGroups: [""]
   resources: ["services","pods"]
@@ -28,7 +28,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: external-dns-viewer
-  namespace: external-dns
+  namespace: pi-hole
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -36,13 +36,13 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: external-dns
-  namespace: external-dns
+  namespace: pi-hole
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: external-dns
-  namespace: external-dns
+  namespace: pi-hole
 spec:
   strategy:
     type: Recreate
@@ -69,9 +69,10 @@ spec:
         # the policy to upsert-only so they do not get deleted.
         - --policy=upsert-only
         - --provider=pihole
+        - --annotation-filter=external-dns.alpha.kubernetes.io/provider=pihole
         # Switch to pihole V6 API
         - --pihole-api-version=6
         # Change this to the actual address of your Pi-hole web server
-        - --pihole-server=http://pihole.pi-hole
+        - --pihole-server=http://pihole
       securityContext:
         fsGroup: 65534 # For ExternalDNS to be able to read Kubernetes token files

@@ -8,6 +8,7 @@ metadata:
   namespace: live
   annotations:
     external-dns.alpha.kubernetes.io/hostname: live.svc.ddlia.com
+    external-dns.alpha.kubernetes.io/provider: "pihole"
 spec:
   ipFamilyPolicy: SingleStack
   ipFamilies:
