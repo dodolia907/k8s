@@ -4,10 +4,10 @@ metadata:
   name: rtmp-service
   labels:
     app: rtmp-live-server
-    announce: bgp-v4
   namespace: live
   annotations:
     external-dns.alpha.kubernetes.io/hostname: live.svc.ddlia.com
+    io.cilium/lb-ipam-pools: "internal"
 spec:
   selector:
     app: rtmp-live-server
