@@ -7,6 +7,9 @@ metadata:
     external-dns.alpha.kubernetes.io/hostname: murchace.svc.ddlia.com
     io.cilium/lb-ipam-pools: "internal"
 spec:
+  ipFamilyPolicy: SingleStack
+  ipFamilies:
+  - IPv6
   selector:
     app: murchace
   type: LoadBalancer
