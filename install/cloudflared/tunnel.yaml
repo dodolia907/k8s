@@ -33,6 +33,8 @@ spec:
             - cloudflared
             - tunnel
             - --no-autoupdate
+            - --edge-ip-version
+            - "6"
             - --loglevel
             - debug
             - --metrics
