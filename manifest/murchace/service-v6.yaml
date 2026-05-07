@@ -3,10 +3,9 @@ kind: Service
 metadata:
   name: murchace
   namespace: murchace
-  labels:
-    announce: bgp-v4
   annotations:
     external-dns.alpha.kubernetes.io/hostname: murchace.svc.ddlia.com
+    io.cilium/lb-ipam-pools: "internal"
 spec:
   selector:
     app: murchace
