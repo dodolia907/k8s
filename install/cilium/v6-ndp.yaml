@@ -6,3 +6,10 @@ spec:
   interfaces:
   - enp3s0
   loadBalancerIPs: true
+  externalIPs: true
+  nodeSelector:
+    matchExpressions:
+      - key: "kubernetes.io/os"
+        operator: In
+        values:
+          - linux

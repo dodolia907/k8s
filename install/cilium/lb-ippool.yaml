@@ -11,7 +11,21 @@ spec:
 apiVersion: "cilium.io/v2"
 kind: CiliumLoadBalancerIPPool
 metadata:
-  name: ipv6-ndp-pool
+  name: ipv6-ndp-pool-gua
+  labels:
+    network-scope: global
 spec:
   blocks:
-    - cidr: "<NGN-RA-PREFIX>::beef:0/112"
+    - cidr: "<NGN-Prefix>::beef:0/112"
+    
+---
+
+apiVersion: "cilium.io/v2"
+kind: CiliumLoadBalancerIPPool
+metadata:
+  name: ipv6-ndp-pool-ula
+  labels:
+    network-scope: internal
+spec:
+  blocks:
+    - cidr: "fd00:20::beef:0/112"
