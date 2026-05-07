@@ -3,13 +3,15 @@ kind: Service
 metadata:
   name: pihole
   namespace: pi-hole
+  labels:
+    announce: bgp-v4
   annotations:
     external-dns.alpha.kubernetes.io/hostname: pihole.k8s.ddlia.com
+    io.cilium/lb-ipam-ips: "10.88.254.254"
 spec:
   selector:
     app: pihole
   type: LoadBalancer
-  loadBalancerIP: 10.88.254.253
   ports:
     - name: dns-tcp
       protocol: TCP

@@ -50,6 +50,8 @@ spec:
           value: "Asia/Tokyo"
         - name: FTLCONF_NTP_ENABLED
           value: "false"
+        - name: FTLCONF_webserver_api_password
+          value: ""
         volumeMounts:
         - name: pihole-data
           mountPath: /etc/pihole

@@ -7,11 +7,11 @@ metadata:
   namespace: pi-hole
   annotations:
     external-dns.alpha.kubernetes.io/hostname: pihole.k8s.ddlia.com
+    io.cilium/lb-ipam-ips: "fd00:20::beef:ffff"
 spec:
   selector:
     app: pihole
   type: LoadBalancer
-  loadBalancerIP: <NTT-NGN RA Prefix>:feed::ffff
   ipFamilies:
     - IPv6
   ipFamilyPolicy: SingleStack
