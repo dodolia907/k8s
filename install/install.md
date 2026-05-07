@@ -193,19 +193,23 @@ kubectl create ns external-dns
 kubectl apply -f manifest.yaml
 ```
 
-```
-## ArgoCDのインストール
-kubectl create namespace argocd
-kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
-kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}'
-kubectl patch svc argocd-server -n argocd -p '{"metadata": {"annotations": {"external-dns.alpha.kubernetes.io/hostname": "cd.k8s.ddlia.com"}}}'
-cd /usr/local/bin
-curl -L https://github.com/argoproj/argo-cd/releases/download/v3.1.7/argocd-linux-amd64 -o argocd
-chmod +x argocd
-argocd admin initial-password -n argocd
-argocd login cd.k8s.ddlia.com
-argocd account update-password
 
+## ArgoCDのインストール
+```
+kubectl create namespace argocd
+kubectl apply -n argocd --server-side --force-conflicts -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.4.1/manifests/install.yaml
+kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}'
+kubectl patch svc argocd-server -n argocd -p '{"metadata": {"labels": {"announce": "bgp-v4"}}}'
+kubectl patch svc argocd-server -n argocd -p '{"metadata": {"annotations": {"external-dns.alpha.kubernetes.io/hostname": "cd.svc.ddlia.com"}}}'
+cd /usr/local/bin
+sudo curl -L https://github.com/argoproj/argo-cd/releases/download/v3.4.1/argocd-linux-amd64 -o argocd
+sudo chmod +x argocd
+argocd admin initial-password -n argocd
+argocd login cd.svc.ddlia.com
+argocd account update-password
+```
+
+```
 ## cloudflaredのインストール
 kubectl create namespace cloudflare
 wget https://raw.githubusercontent.com/dodolia907/k8s/main/tyh/install/cloudflared/token.yaml
