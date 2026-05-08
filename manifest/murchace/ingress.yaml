@@ -5,7 +5,6 @@ metadata:
   namespace: murchace
   annotations:
     external-dns.alpha.kubernetes.io/hostname: murchace.svc.ddlia.com
-    external-dns.alpha.kubernetes.io/target: v4.ingress.svc.ddlia.com, local.v6.ingress.svc.ddlia.com
     external-dns.alpha.kubernetes.io/provider: "pihole"
 spec:
   ingressClassName: cilium

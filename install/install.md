@@ -116,9 +116,9 @@ cilium install \
 
 ## Ingress ServiceをBGPでアナウンスするようにする
 kubectl patch service cilium-ingress -n kube-system -p '{"metadata": {"labels": {"announce": "bgp-v4"}}}'
-## Ingress ServiceにExternal-DNSのアノテーションを付与する
-kubectl patch service cilium-ingress -n kube-system -p '{"metadata": {"annotations": {"external-dns.alpha.kubernetes.io/provider": "pihole"}}}'
-kubectl patch service cilium-ingress -n kube-system -p '{"metadata": {"annotations": {"external-dns.alpha.kubernetes.io/hostname": "v4.ingress.svc.ddlia.com"}}}'
+## Ingress ServiceをDual-Stackに変更する
+kubectl patch service cilium-ingress -n kube-system -p '{"metadata": {"labels": {"io.cilium/lb-pool": "ula"}}}'
+kubectl patch service cilium-ingress -n kube-system -p '{"spec": {"ipFamilyPolicy": "PreferDualStack", "ipFamilies": ["IPv4", "IPv6"]}}'
 
 ## 設定適用
 cd install/cilium
