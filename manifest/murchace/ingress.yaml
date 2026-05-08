@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: murchace-ingress
+  namespace: murchace
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: murchace.svc.ddlia.com
+    external-dns.alpha.kubernetes.io/provider: "pihole"
+spec:
+  ingressClassName: cilium
+  rules:
+  - host: murchace.svc.ddlia.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: murchace
+            port:
+              number: 80
