@@ -9,6 +9,9 @@ metadata:
     app.kubernetes.io/part-of: cilium
     cilium.io/ingress: "true"
     io.cilium/lb-pool: ula
+  annotations:
+    external-dns.alpha.kubernetes.io/provider: pihole
+    external-dns.alpha.kubernetes.io/hostname: local.v6.ingress.svc.ddlia.com
   name: cilium-ingress-v6-ula
   namespace: kube-system
 spec:
@@ -42,6 +45,9 @@ metadata:
     app.kubernetes.io/part-of: cilium
     cilium.io/ingress: "true"
     io.cilium/lb-pool: gua
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: global.v6.ingress.svc.ddlia.com
+    external-dns.alpha.kubernetes.io/provider: cloudflare
   name: cilium-ingress-v6-gua
   namespace: kube-system
 spec:
