@@ -110,7 +110,16 @@ cilium install \
   --set enableIPv4Masquerade=false \
   --set enableIPv6Masquerade=true \
   --set k8sServiceHost=10.1.88.101 \
-  --set k8sServicePort=6443
+  --set k8sServicePort=6443 \
+  --set ingressController.enabled=true \
+  --set ingressController.loadbalancerMode=shared
+
+## Ingress ServiceをBGPでアナウンスするようにする
+kubectl patch service cilium-ingress -n kube-system -p '{"metadata": {"labels": {"announce": "bgp-v4"}}}'
+
+## 設定適用
+cd install/cilium
+kubectl apply -f .
 ```
 
 

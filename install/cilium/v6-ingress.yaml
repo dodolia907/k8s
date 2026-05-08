@@ -1,0 +1,63 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    meta.helm.sh/release-name: cilium
+    meta.helm.sh/release-namespace: kube-system
+  labels:
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: cilium
+    cilium.io/ingress: "true"
+    io.cilium/lb-pool: ula
+  name: cilium-ingress-v6-ula
+  namespace: kube-system
+spec:
+  selector:
+    cilium.io/ingress: "true"
+  allocateLoadBalancerNodePorts: true
+  ipFamilies:
+  - IPv6
+  ipFamilyPolicy: SingleStack
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: 80
+  - name: https
+    port: 443
+    protocol: TCP
+    targetPort: 443
+  type: LoadBalancer
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    meta.helm.sh/release-name: cilium
+    meta.helm.sh/release-namespace: kube-system
+  labels:
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: cilium
+    cilium.io/ingress: "true"
+    io.cilium/lb-pool: gua
+  name: cilium-ingress-v6-gua
+  namespace: kube-system
+spec:
+  selector:
+    cilium.io/ingress: "true"
+  allocateLoadBalancerNodePorts: true
+  ipFamilies:
+  - IPv6
+  ipFamilyPolicy: SingleStack
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: 80
+  - name: https
+    port: 443
+    protocol: TCP
+    targetPort: 443
+  type: LoadBalancer
