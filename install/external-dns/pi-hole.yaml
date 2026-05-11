@@ -1,15 +1,13 @@
----
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: external-dns
+  name: pihole-external-dns
   namespace: pi-hole
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: external-dns
-  namespace: pi-hole
+  name: pihole-external-dns
 rules:
 - apiGroups: [""]
   resources: ["services","pods"]
@@ -27,36 +25,35 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: external-dns-viewer
-  namespace: pi-hole
+  name: pihole-external-dns-viewer
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: external-dns
+  name: pihole-external-dns
 subjects:
 - kind: ServiceAccount
-  name: external-dns
+  name: pihole-external-dns
   namespace: pi-hole
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: external-dns
+  name: pihole-external-dns
   namespace: pi-hole
 spec:
   strategy:
     type: Recreate
   selector:
     matchLabels:
-      app: external-dns
+      app: pihole-external-dns
   template:
     metadata:
       labels:
-        app: external-dns
+        app: pihole-external-dns
     spec:
-      serviceAccountName: external-dns
+      serviceAccountName: pihole-external-dns
       containers:
-      - name: external-dns
+      - name: pihole-external-dns
         image: registry.k8s.io/external-dns/external-dns:v0.21.0
         args:
         - --source=service
