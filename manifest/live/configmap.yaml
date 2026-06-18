@@ -6,9 +6,7 @@ metadata:
   labels:
     app: rtmp-live-server
 data:
-  nginx.conf: |
-    load_module modules/ngx_rtmp_module.so;
-  
+  nginx.conf: |  
     worker_processes  auto;
     #error_log  logs/error.log;
 
