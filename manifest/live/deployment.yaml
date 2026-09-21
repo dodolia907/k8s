@@ -15,6 +15,9 @@ spec:
       labels:
         app: rtmp-live-server
     spec:
+      securityContext:
+        # GID 44 (video) / 105 (render) for host /dev/dri access
+        supplementalGroups: [44, 105]
       containers:
       - name: rtmp-live-server
         image: ghcr.io/technotut/rtmp-live-server:main
@@ -22,12 +25,45 @@ spec:
         ports:
         - containerPort: 1935
         - containerPort: 8080
+        securityContext:
+          privileged: false
         volumeMounts:
-        - name: rtmp-config
-          mountPath: /etc/nginx/nginx.conf
-          subPath: nginx.conf
+          - name: dev-dri
+            mountPath: /dev/dri
       volumes:
-      - name: rtmp-config
-        configMap:
-          name: rtmp-config
+        - name: dev-dri
+          hostPath:
+            path: /dev/dri
+            type: Directory
       restartPolicy: Always
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: live-dashboard
+  namespace: live
+  labels:
+    app.kubernetes.io/name: live-dashboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: live-dashboard
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: live-dashboard
+    spec:
+      containers:
+        - name: dashboard
+          image: ghcr.io/technotut/rtmp-live-server-dashboard:main
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+          env:
+            - name: RTMP_STAT_URL
+              value: "http://rtmp-service:80/stat"
+            - name: RTMP_THUMBNAIL_BASE_URL
+              value: "http://rtmp-service:80/thumbnails"
