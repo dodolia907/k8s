@@ -30,17 +30,15 @@ metadata:
   namespace: live
   labels:
     app.kubernetes.io/name: live-dashboard
-    announce: bgp-v4
-  annotations:
-    external-dns.alpha.kubernetes.io/hostname: dash.live.svc.ddlia.com
-    external-dns.alpha.kubernetes.io/provider: "pihole"
 spec:
+  type: ClusterIP
   selector:
     app.kubernetes.io/name: live-dashboard
-  type: LoadBalancer
   ports:
     - name: http
       protocol: TCP
-      port: 3000
+      port: 80
       targetPort: 3000
+
+
 

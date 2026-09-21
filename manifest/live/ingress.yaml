@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: live-dashboard-ingress
+  namespace: live
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: dash.live.svc.ddlia.com
+    external-dns.alpha.kubernetes.io/provider: "pihole"
+spec:
+  ingressClassName: cilium
+  rules:
+  - host: dash.live.svc.ddlia.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: live-dashboard
+            port:
+              number: 80
