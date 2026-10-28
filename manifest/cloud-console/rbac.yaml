@@ -1,0 +1,25 @@
+# The console reads every resource and applies arbitrary manifests, exec and
+# scale on behalf of the signed-in user, so it needs broad rights. It is not
+# given escalate, bind or impersonate. Cloudflare Access must allow only the
+# owner (see AGENTS.md).
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cloud-console
+rules:
+  - apiGroups: ["*"]
+    resources: ["*"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cloud-console
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cloud-console
+subjects:
+  - kind: ServiceAccount
+    name: cloud-console
+    namespace: cloud-console

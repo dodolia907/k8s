@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloud-console
+spec:
+  replicas: 1 # pending changes and metrics are kept in memory
+  template:
+    spec:
+      serviceAccountName: cloud-console
+      imagePullSecrets:
+        - name: ghcr-pull
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: console
+          image: ghcr.io/dodolia907/cloud-console:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: cloud-console-env
+          env:
+            - name: REGIONS_FILE
+              value: /etc/cloud-console/regions.yaml
+            - name: CREDENTIALS_DIR
+              value: /etc/cloud-console/credentials
+          volumeMounts:
+            - name: regions
+              mountPath: /etc/cloud-console/regions.yaml
+              subPath: regions.yaml
+              readOnly: true
+            - name: credentials
+              mountPath: /etc/cloud-console/credentials
+              readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+      volumes:
+        - name: regions
+          configMap:
+            name: cloud-console-regions
+        - name: credentials
+          secret:
+            secretName: cloud-console-credentials
+            optional: true
