@@ -253,6 +253,12 @@ kubectl create -f https://github.com/kubevirt/containerized-data-importer/releas
 kubectl create -f https://github.com/kubevirt/containerized-data-importer/releases/download/$VERSION/cdi-cr.yaml
 ```
 
+## metrics-serverのインストール (ArgoCD)
+```
+kubectl apply -f ~/k8s/install/argocd/metrics-server.yaml
+kubectl top nodes
+```
+
 # リセット
 ```
 sudo kubeadm reset
