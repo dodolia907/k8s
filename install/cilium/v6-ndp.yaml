@@ -7,6 +7,11 @@ spec:
   - enp3s0
   loadBalancerIPs: true
   externalIPs: true
+  # Only Services that take an IPv6 address from a pool.
+  serviceSelector:
+    matchExpressions:
+      - key: "io.cilium/lb-pool"
+        operator: Exists
   nodeSelector:
     matchExpressions:
       - key: "kubernetes.io/os"
