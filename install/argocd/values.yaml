@@ -1,0 +1,54 @@
+# Helm values for Argo CD. Used by the bootstrap in install.md and by
+# install/argocd/apps/argocd.yaml, so keep the chart version in both in step.
+global:
+  domain: cd.svc.ddlia.com
+  dualStack:
+    ipFamilyPolicy: PreferDualStack
+
+# Not needed here (no SSO, no notifications, no ApplicationSets).
+dex:
+  enabled: false
+notifications:
+  enabled: false
+applicationSet:
+  replicas: 0
+
+controller:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 1Gi
+
+repoServer:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      memory: 512Mi
+
+server:
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      memory: 256Mi
+  service:
+    type: LoadBalancer
+    labels:
+      announce: bgp-v4
+      io.cilium/lb-pool: ula
+    annotations:
+      external-dns.alpha.kubernetes.io/provider: pihole
+      external-dns.alpha.kubernetes.io/hostname: cd.svc.ddlia.com
+
+redis:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      memory: 128Mi

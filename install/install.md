@@ -209,14 +209,16 @@ IPv6はL2（NDP）で広報する．ルーターがRA prefixをWANとLANで共�
 ここから先はArgo CDが管理する．事前に，このリポジトリの変更をGitHubへpushしておく．
 ```
 cd ~/k8s
-kubectl apply --server-side --force-conflicts -k install/argocd
+helm install argocd argo-cd --repo https://argoproj.github.io/argo-helm --version 10.11.6 -n argocd --create-namespace -f install/argocd/values.yaml
+kubectl -n argocd rollout status deploy/argocd-server
+kubectl apply -f install/argocd/root.yaml
 
 cd /usr/local/bin
-sudo curl -L https://github.com/argoproj/argo-cd/releases/download/v3.4.1/argocd-linux-amd64 -o argocd
+sudo curl -L https://github.com/argoproj/argo-cd/releases/download/v3.5.6/argocd-linux-amd64 -o argocd
 sudo chmod +x argocd
 argocd admin initial-password -n argocd
 kubectl -n argocd get svc argocd-server
-argocd login <argocd-serverのLB IP>
+argocd login <argocd-serverのLB IP> --insecure
 argocd account update-password
 ```
 
