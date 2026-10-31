@@ -28,7 +28,7 @@
 - 権限は対象プールの更新に必要な範囲に絞る。
 
 ## namespaceの要件
-- 基盤は役割ごと: `dns`（Pi-hole、external-dns）、`tunnel`（cloudflared）、`storage`（NFSプロビジョナ）、`monitoring`。
+- 基盤は役割ごと: `dns`（Pi-hole、external-dns）、`tunnel`（cloudflared）、`storage`（NFSプロビジョナ）。
 - アプリは1アプリ1namespaceで、`manifest/` のディレクトリ名と揃える。
 - `kube-system`、`argocd`、`kubevirt`、`cdi` は上流の前提に合わせる。ra-prefix-controller、Sealed Secrets、Cilium、metrics-serverは `kube-system`。
 - 共通の名前空間は [install/namespaces/](install/namespaces/) で作る（`cloud-console` は自身のマニフェストで作る）。
@@ -39,6 +39,7 @@
 - NFS上のSQLiteやPrometheusは1レプリカかつ `Recreate` で動かす。
 
 ## 運用の要件
-- 全コンポーネントをArgo CDのApp of Appsで管理し、バージョンを固定する。`latest` などの可変タグは使わない。
+- Argo CDは `manifest/` のアプリだけをApp of Appsで管理する。`install/` のシステムコンポーネント（Cilium、Argo CD自身、Sealed Secrets、NFS、DNS、Tunnel、KubeVirtなど）は、誤って落とさないようArgo CDで管理せず、HelmとkubectlでGitの内容を手動で適用する。
+- 全コンポーネントのバージョンを固定する。`latest` などの可変タグは使わない。
 - Secretは Sealed Secrets で暗号化してコミットする。復号鍵はオフラインに保管する。
 - 再インストールを想定し、手作業の手順は `install/install.md` に残す。
