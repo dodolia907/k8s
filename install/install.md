@@ -1,7 +1,7 @@
 # Kubernetesのセットアップ
 Debian 13.7.0を使用する．要件は [AGENTS.md](../AGENTS.md) を参照．
 
-`<...>` は実機の値に置き換える．以下は `enp3s0`，コントロールプレーン兼NFSサーバ `10.1.88.101` を前提とする．
+`<...>` は実機の値に置き換える．以下は `enp2s0`，コントロールプレーン兼NFSサーバ `10.1.88.101` を前提とする．
 
 # リポジトリの取得
 ```
@@ -28,12 +28,10 @@ sudoedit /etc/fstab
 ## ネットワーク
 IPv4とULAは固定し，GUAはRAからSLAACで取得する．RA prefixは変わる可能性があるので，kubeletなどに設定しない．
 ```
-sudo tee /etc/network/interfaces.d/enp3s0 <<EOF
-auto enp3s0
-iface enp3s0 inet static
-    address <このノードのIPv4>/24
-    gateway <IPv4ゲートウェイ>
-iface enp3s0 inet6 static
+## IPv4は /etc/network/interfaces に設定済み（10.1.88.x/16，ゲートウェイ 10.1.0.1）
+## ULAはノードごとに cp00: fd00:20::101，wk01〜wk03: fd00:20::151〜153
+sudo tee /etc/network/interfaces.d/enp2s0-ipv6 <<EOF
+iface enp2s0 inet6 static
     address <このノードの固定ULA>/64
     autoconf 1
     accept_ra 2
@@ -59,13 +57,13 @@ net.ipv4.ip_forward                 = 1
 net.ipv6.conf.all.forwarding        = 1
 net.ipv6.conf.default.forwarding    = 1
 ## forwarding有効時もRAを受ける
-net.ipv6.conf.enp3s0.accept_ra      = 2
-net.ipv6.conf.enp3s0.autoconf       = 1
+net.ipv6.conf.enp2s0.accept_ra      = 2
+net.ipv6.conf.enp2s0.autoconf       = 1
 EOF
 sudo sysctl --system
 
 ## GUAとRAの経路を確認
-ip -6 addr show dev enp3s0 scope global
+ip -6 addr show dev enp2s0 scope global
 ip -6 route show default
 ```
 
@@ -187,10 +185,8 @@ sudo kubeadm join --config join-config.yaml
 kubectl get nodes -o wide
 kubectl get nodes -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.spec.podCIDRs}{"\n"}{end}'
 
-## 実機のあるノードにラベルを付ける（live）
-kubectl label node <GPUのあるノード> ddlia.com/gpu=true
 ```
-`/dev/dri` のGIDはDebianの実値を `getent group video render` で確認し，[manifest/live/deployment.yaml](../manifest/live/deployment.yaml) の `supplementalGroups` に合わせる．`dmx` は `/dev/ttyUSB0` のあるノード名を [manifest/dmx/deployment.yaml](../manifest/dmx/deployment.yaml) の `nodeName` に合わせる．
+`/dev/dri` は全ノードにある．GIDは `getent group video render` で確認し，[manifest/live/deployment.yaml](../manifest/live/deployment.yaml) の `supplementalGroups` に合わせる．
 
 # ルーターの設定
 IPv4のLB IPとPodCIDRをBGPで受ける．ルーターのAS番号は65000，クラスタのAS番号は64512．ピアのアドレスは [cilium/v4-bgp.yaml](cilium/v4-bgp.yaml) に合わせる．
