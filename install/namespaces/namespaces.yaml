@@ -16,11 +16,6 @@ metadata:
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: monitoring
----
-apiVersion: v1
-kind: Namespace
-metadata:
   name: live
 ---
 apiVersion: v1
@@ -36,17 +31,7 @@ metadata:
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: time
----
-apiVersion: v1
-kind: Namespace
-metadata:
   name: nginx-test
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: dev
 ---
 apiVersion: v1
 kind: Namespace
