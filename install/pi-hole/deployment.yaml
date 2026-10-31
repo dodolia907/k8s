@@ -55,6 +55,8 @@ spec:
         # Clients reach Pi-hole through the LB from outside the Pod network.
         - name: FTLCONF_dns_listeningMode
           value: "ALL"
+        - name: FTLCONF_dns_upstreams
+          value: "1.1.1.1;1.0.0.1"
         - name: FTLCONF_webserver_api_password
           value: ""
         resources:
