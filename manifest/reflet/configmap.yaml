@@ -23,6 +23,14 @@ data:
     description = "Home gateway"
     families = ["ipv4-unicast", "ipv6-unicast"]
 
+    [[peers]]
+    # NEC IX (AS 65000). Learns the cluster prefixes from the gateway.
+    address = "192.168.40.1"
+    remote_asn = 65000
+    name = "nec-ix"
+    description = "Upstream NEC IX"
+    families = ["ipv4-unicast", "ipv6-unicast"]
+
     [logging]
     level = "info"
     format = "pretty"
