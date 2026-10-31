@@ -4,7 +4,7 @@ metadata:
   name: ipv6-ndp-policy
 spec:
   interfaces:
-  - enp3s0
+  - enp2s0
   loadBalancerIPs: true
   externalIPs: true
   # Only Services that take an IPv6 address from a pool.

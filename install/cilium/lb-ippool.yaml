@@ -3,6 +3,8 @@ kind: CiliumLoadBalancerIPPool
 metadata:
   name: ipv4-bgp-pool
 spec:
+  # Avoid handing out the network address 10.88.0.0.
+  allowFirstLastIPs: "No"
   blocks:
     - cidr: "10.88.0.0/16"
 

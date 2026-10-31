@@ -14,7 +14,7 @@ spec:
     path: plugins/ra-prefix-controller/chart
     helm:
       valuesObject:
-        interface: enp3s0
+        interface: enp2s0
   destination:
     server: https://kubernetes.default.svc
     namespace: kube-system

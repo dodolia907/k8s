@@ -20,7 +20,7 @@ k8sServicePort: 6443
 k8sClientRateLimit:
   qps: 10
   burst: 20
-devices: enp3s0
+devices: enp2s0
 l2announcements:
   enabled: true
 bgpControlPlane:
