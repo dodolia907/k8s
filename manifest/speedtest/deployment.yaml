@@ -9,7 +9,7 @@ spec:
   selector:
     matchLabels:
       app: speedtest
-  replicas: 3
+  replicas: 1
   template:
     metadata:
       labels:
@@ -17,8 +17,14 @@ spec:
     spec:
       containers:
       - name: speedtest
-        image: docker.io/openspeedtest/latest:latest
+        image: docker.io/openspeedtest/latest:v2.0.8
         ports:
         - containerPort: 3000
         - containerPort: 3001
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 256Mi
       restartPolicy: Always
