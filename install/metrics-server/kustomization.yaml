@@ -1,4 +1,4 @@
-# metrics-server (managed by Argo CD: install/argocd/metrics-server.yaml).
+# metrics-server.
 #
 # kubeadm kubelets serve self-signed certificates, so metrics-server cannot
 # verify them. --kubelet-insecure-tls skips that check; the connection is
