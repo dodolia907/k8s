@@ -1,4 +1,3 @@
-# <...> は実機の値に置き換える。
 apiVersion: kubeadm.k8s.io/v1beta4
 kind: InitConfiguration
 localAPIEndpoint:
@@ -8,7 +7,7 @@ nodeRegistration:
   kubeletExtraArgs:
     # GUAはRA prefixの変更で変わるので指定しない。
     - name: node-ip
-      value: 10.1.88.101,<このノードの固定ULA>
+      value: 10.1.88.101,fd00:20::101
 skipPhases:
   - addon/kube-proxy
 ---
