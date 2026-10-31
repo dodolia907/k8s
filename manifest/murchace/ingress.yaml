@@ -6,7 +6,7 @@ metadata:
 spec:
   ingressClassName: cloudflare-tunnel
   rules:
-  - host: murchace.tut-cc.org
+  - host: murchace.ddlia.com
     http:
       paths:
       - path: /
@@ -16,7 +16,20 @@ spec:
             name: murchace
             port:
               number: 80
-  - host: murchace.ddlia.com
+---
+# tut-cc.org is a CNAME to murchace.ddlia.com managed in its own zone, so only
+# the tunnel route is needed here.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: murchace-tut-cc-ingress
+  namespace: murchace
+  annotations:
+    cloudflare-tunnel-ingress-controller.strrl.dev/disable-dns-management: "true"
+spec:
+  ingressClassName: cloudflare-tunnel
+  rules:
+  - host: murchace.tut-cc.org
     http:
       paths:
       - path: /
