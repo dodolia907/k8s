@@ -1,0 +1,15 @@
+# <...> は実機の値に置き換える。トークンとハッシュは次のコマンドで取得する（コミットしない）:
+#   kubeadm token create --print-join-command
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: JoinConfiguration
+discovery:
+  bootstrapToken:
+    apiServerEndpoint: k8s-api.internal:6443
+    token: <TOKEN>
+    caCertHashes:
+      - <CA_CERT_HASH>
+nodeRegistration:
+  criSocket: unix:///run/containerd/containerd.sock
+  kubeletExtraArgs:
+    - name: node-ip
+      value: <このノードのIPv4>,<このノードの固定ULA>
