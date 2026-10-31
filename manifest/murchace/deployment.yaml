@@ -28,7 +28,7 @@ spec:
             cpu: 10m
             memory: 64Mi
           limits:
-            memory: 256Mi
+            memory: 1Gi
         volumeMounts:
         - mountPath: /murchace/db
           name: murchace-db
