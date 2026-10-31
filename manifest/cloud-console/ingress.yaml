@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: cloud-console
+spec:
+  ingressClassName: cloudflare-tunnel
+  rules:
+  - host: cloud.ddlia.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: cloud-console
+            port:
+              number: 8080

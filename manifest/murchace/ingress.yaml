@@ -3,13 +3,20 @@ kind: Ingress
 metadata:
   name: murchace-ingress
   namespace: murchace
-  annotations:
-    external-dns.alpha.kubernetes.io/hostname: murchace.svc.ddlia.com
-    external-dns.alpha.kubernetes.io/provider: "pihole"
 spec:
-  ingressClassName: cilium
+  ingressClassName: cloudflare-tunnel
   rules:
-  - host: murchace.svc.ddlia.com
+  - host: murchace.tut-cc.org
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: murchace
+            port:
+              number: 80
+  - host: murchace.ddlia.com
     http:
       paths:
       - path: /

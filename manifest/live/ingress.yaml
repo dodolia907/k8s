@@ -3,13 +3,10 @@ kind: Ingress
 metadata:
   name: live-dashboard-ingress
   namespace: live
-  annotations:
-    external-dns.alpha.kubernetes.io/hostname: dash.live.svc.ddlia.com
-    external-dns.alpha.kubernetes.io/provider: "pihole"
 spec:
-  ingressClassName: cilium
+  ingressClassName: cloudflare-tunnel
   rules:
-  - host: dash.live.svc.ddlia.com
+  - host: live.ddlia.com
     http:
       paths:
       - path: /

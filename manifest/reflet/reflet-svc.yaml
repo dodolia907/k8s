@@ -7,7 +7,7 @@ metadata:
     announce: bgp-v4
     io.cilium/lb-pool: ula
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: looking-glass.k8s.ddlia.com
+    external-dns.alpha.kubernetes.io/hostname: looking-glass.svc.ddlia.com
     external-dns.alpha.kubernetes.io/provider: "pihole"
 spec:
   selector:

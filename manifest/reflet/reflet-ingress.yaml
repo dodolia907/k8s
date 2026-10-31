@@ -1,0 +1,18 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: reflet-ingress
+  namespace: reflet
+spec:
+  ingressClassName: cloudflare-tunnel
+  rules:
+  - host: looking-glass.ddlia.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: reflet-service
+            port:
+              number: 80
