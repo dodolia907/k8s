@@ -1,0 +1,22 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: pihole
+  namespace: dns
+  annotations:
+    # Without a password, the API only accepts its own names (see deployment.yaml).
+    # The API has no password, so Cloudflare Access must protect this host.
+    cloudflare-tunnel-ingress-controller.strrl.dev/http-host-header: pihole
+spec:
+  ingressClassName: cloudflare-tunnel
+  rules:
+  - host: tyh-ns.ddlia.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: pihole
+            port:
+              number: 80

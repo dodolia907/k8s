@@ -1,0 +1,28 @@
+cloudflare:
+  secretRef:
+    name: cloudflare-tunnel-ingress
+    accountIDKey: account_id
+    tunnelNameKey: tunnel_name
+    apiTokenKey: api_token
+image:
+  tag: 0.1.0
+resources:
+  requests:
+    cpu: 10m
+    memory: 32Mi
+  limits:
+    memory: 128Mi
+cloudflared:
+  image:
+    tag: 2026.7.3-host-metrics.1
+  replicaCount: 2
+  podAntiAffinity: true
+  extraArgs:
+    - --edge-ip-version
+    - "6"
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      memory: 128Mi

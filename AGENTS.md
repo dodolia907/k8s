@@ -28,10 +28,14 @@
 - 権限は対象プールの更新に必要な範囲に絞る。
 
 ## namespaceの要件
-- 基盤は役割ごと: `dns`（Pi-hole、external-dns）、`tunnel`（cloudflared）、`storage`（NFSプロビジョナ）。
+- 基盤は役割ごと: `dns`（Pi-hole、external-dns）、`tunnel`（cloudflared、Tunnel Ingressコントローラ）、`storage`（NFSプロビジョナ）。
 - アプリは1アプリ1namespaceで、`manifest/` のディレクトリ名と揃える。
 - `kube-system`、`argocd`、`kubevirt`、`cdi` は上流の前提に合わせる。ra-prefix-controller、Sealed Secrets、Cilium、metrics-serverは `kube-system`。
 - 共通の名前空間は [install/namespaces/](install/namespaces/) で作る（`cloud-console` は自身のマニフェストで作る）。
+
+## Cloudflare Tunnelの要件
+- Tunnelは役割で分ける。既存のTunnel（`tunnel-token`）はPrivate Network専用で、Public Hostnameを設定しない。
+- Webの公開はすべて `k8s-ingress` のTunnelに流し、Ingressの `ingressClassName: cloudflare-tunnel` で指定する。
 
 ## ストレージの要件
 - `10.1.88.101` のext4 + NFSを `nfs-subdir-external-provisioner` で動的プロビジョニングする。StorageClass名は `nfs-client`。

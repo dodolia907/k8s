@@ -232,11 +232,15 @@ sudo install -m 755 kubeseal /usr/local/bin/kubeseal
 
 seal() { kubeseal --controller-name sealed-secrets-controller --controller-namespace kube-system -o yaml > ~/k8s/install/sealed/$1.yaml; }
 
-## Cloudflare Tunnelのトークン
+## Cloudflare Tunnelのトークン（Private Network専用．Public Hostnameは設定しない）
 kubectl create secret generic tunnel-token -n tunnel --from-literal=token=<トークン> --dry-run=client -o yaml | seal tunnel-token
 
 ## Cloudflare APIトークン (Zone/DNS/Edit，Zone/Zone/Read)
 kubectl create secret generic cloudflare-api-key -n dns --from-literal=apiKey=<トークン> --dry-run=client -o yaml | seal cloudflare-api-key
+
+## Tunnel Ingressコントローラ用のAPIトークン (Zone/DNS/Edit，Zone/Zone/Read，Account/Cloudflare Tunnel/Edit)
+## Web公開用のTunnel．tunnel_name はPrivate Network用のTunnelと別の名前にする．なければ作られ，既存なら経路が上書きされる
+kubectl create secret generic cloudflare-tunnel-ingress -n tunnel --from-literal=api_token=<トークン> --from-literal=account_id=<アカウントID> --from-literal=tunnel_name=k8s-ingress --dry-run=client -o yaml | seal cloudflare-tunnel-ingress
 
 kubectl apply -f install/sealed/
 ```
@@ -254,6 +258,29 @@ Secretを作ってから，DNSとTunnelを入れる．
 kubectl apply -f install/pi-hole/
 kubectl apply -f install/external-dns/
 kubectl apply -k install/cloudflared/
+helm upgrade --install cloudflare-tunnel-ingress-controller cloudflare-tunnel-ingress-controller --repo https://helm.strrl.dev --version 0.1.0 -n tunnel -f install/cloudflared/ingress-controller-values.yaml
+```
+
+Web Appを公開するときは，Ingressに `ingressClassName: cloudflare-tunnel` を指定する．DNSのCNAMEはコントローラが作るので，external-dnsのアノテーションは付けない．
+```
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: <アプリ>
+  namespace: <アプリ>
+spec:
+  ingressClassName: cloudflare-tunnel
+  rules:
+  - host: <アプリ>.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: <Service>
+            port:
+              number: 80
 ```
 
 # Argo CDのインストール

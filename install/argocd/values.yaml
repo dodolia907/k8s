@@ -1,7 +1,7 @@
 # Helm values for Argo CD. Used by the bootstrap in install.md and by
 # install/argocd/apps/argocd.yaml, so keep the chart version in both in step.
 global:
-  domain: cd.svc.ddlia.com
+  domain: cd.ddlia.com
   dualStack:
     ipFamilyPolicy: PreferDualStack
 
@@ -44,6 +44,12 @@ server:
     annotations:
       external-dns.alpha.kubernetes.io/provider: pihole
       external-dns.alpha.kubernetes.io/hostname: cd.svc.ddlia.com
+  ingress:
+    enabled: true
+    ingressClassName: cloudflare-tunnel
+    annotations:
+      # argocd-server redirects HTTP to HTTPS and serves a self-signed certificate.
+      cloudflare-tunnel-ingress-controller.strrl.dev/backend-protocol: https
 
 redis:
   resources:
