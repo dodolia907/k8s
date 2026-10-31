@@ -57,6 +57,9 @@ spec:
           value: "ALL"
         - name: FTLCONF_dns_upstreams
           value: "1.1.1.1;1.0.0.1"
+        # Without a password, the API only accepts its own names; external-dns uses this one.
+        - name: FTLCONF_webserver_domain
+          value: "pihole"
         - name: FTLCONF_webserver_api_password
           value: ""
         resources:
