@@ -5,6 +5,7 @@ metadata:
   labels:
     app: rtmp-live-server
     announce: bgp-v4
+    io.cilium/lb-pool: ula
   namespace: live
   annotations:
     external-dns.alpha.kubernetes.io/hostname: live.svc.ddlia.com
@@ -13,6 +14,7 @@ spec:
   selector:
     app: rtmp-live-server
   type: LoadBalancer
+  ipFamilyPolicy: PreferDualStack
   ports:
     - name: rtmp
       protocol: TCP
