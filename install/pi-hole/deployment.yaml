@@ -52,6 +52,9 @@ spec:
           value: "Asia/Tokyo"
         - name: FTLCONF_NTP_ENABLED
           value: "false"
+        # Clients reach Pi-hole through the LB from outside the Pod network.
+        - name: FTLCONF_dns_listeningMode
+          value: "ALL"
         - name: FTLCONF_webserver_api_password
           value: ""
         resources:
