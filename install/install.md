@@ -232,9 +232,6 @@ sudo install -m 755 kubeseal /usr/local/bin/kubeseal
 
 seal() { kubeseal --controller-name sealed-secrets-controller --controller-namespace kube-system -o yaml > ~/k8s/install/sealed/$1.yaml; }
 
-## Pi-hole APIのパスワード．Pi-holeとexternal-dnsで同じSecret名を使う
-kubectl create secret generic pihole-api -n dns --from-literal=password=<パスワード> --dry-run=client -o yaml | seal pihole-api
-
 ## Cloudflare Tunnelのトークン
 kubectl create secret generic tunnel-token -n tunnel --from-literal=token=<トークン> --dry-run=client -o yaml | seal tunnel-token
 

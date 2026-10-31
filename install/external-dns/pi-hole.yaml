@@ -71,12 +71,6 @@ spec:
         - --pihole-api-version=6
         # Change this to the actual address of your Pi-hole web server
         - --pihole-server=http://pihole
-        env:
-        - name: EXTERNAL_DNS_PIHOLE_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: pihole-api
-              key: password
         resources:
           requests:
             cpu: 10m
