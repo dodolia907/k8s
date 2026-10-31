@@ -3,12 +3,17 @@ kind: Service
 metadata:
   name: dev-service
   namespace: dev
+  labels:
+    announce: bgp-v4
+    io.cilium/lb-pool: ula
   annotations:
     external-dns.alpha.kubernetes.io/hostname: dev.k8s.ddlia.com
+    external-dns.alpha.kubernetes.io/provider: "pihole"
 spec:
   selector:
     vm.kubevirt.io/name: dev
   type: LoadBalancer
+  ipFamilyPolicy: PreferDualStack
   ports:
     - name: ssh
       port: 22
