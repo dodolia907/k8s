@@ -10,6 +10,8 @@ spec:
     matchLabels:
       app: murchace
   replicas: 1
+  strategy:
+    type: Recreate
   template:
     metadata:
       labels:
@@ -17,10 +19,16 @@ spec:
     spec:
       containers:
       - name: murchace
-        image: ghcr.io/tut-cc/murchace:main
-        imagePullPolicy: Always
+        image: ghcr.io/tut-cc/murchace:main@sha256:74f5468f04879531318cfa7cde432236851bdb40c710a64906eb8b528090551f
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8000
+        resources:
+          requests:
+            cpu: 10m
+            memory: 64Mi
+          limits:
+            memory: 256Mi
         volumeMounts:
         - mountPath: /murchace/db
           name: murchace-db
