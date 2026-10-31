@@ -13,6 +13,6 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: reflet-service
+            name: reflet-web
             port:
               number: 80

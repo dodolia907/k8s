@@ -1,0 +1,89 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reflet-backend
+  namespace: reflet
+  labels:
+    app: reflet-backend
+spec:
+  # One instance holds the only BGP session and the RIB in memory.
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: reflet-backend
+  template:
+    metadata:
+      labels:
+        app: reflet-backend
+    spec:
+      containers:
+        - name: backend
+          image: ghcr.io/gmazoyer/reflet:v0.2.0
+          imagePullPolicy: IfNotPresent
+          args: ["--config", "/etc/reflet/config.toml"]
+          ports:
+            - name: api
+              containerPort: 8080
+            - name: bgp
+              containerPort: 179
+          volumeMounts:
+            - name: config
+              mountPath: /etc/reflet
+              readOnly: true
+          readinessProbe:
+            tcpSocket:
+              port: api
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            # Scale with the number of routes received. Raise after measuring.
+            limits:
+              memory: 1Gi
+      volumes:
+        - name: config
+          configMap:
+            name: reflet-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reflet-frontend
+  namespace: reflet
+  labels:
+    app: reflet-frontend
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: reflet-frontend
+  template:
+    metadata:
+      labels:
+        app: reflet-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: ghcr.io/gmazoyer/reflet-frontend:v0.2.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: BACKEND_URL
+              value: "http://reflet-backend:8080"
+          ports:
+            - name: http
+              containerPort: 80
+          readinessProbe:
+            tcpSocket:
+              port: http
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 128Mi

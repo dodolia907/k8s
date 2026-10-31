@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: reflet-config
+  namespace: reflet
+data:
+  config.toml: |
+    [server]
+    listen = "0.0.0.0:8080"
+    bgp_listen = "0.0.0.0:179"
+
+    [bgp]
+    # iBGP with the gateway (AS 65000). The router sends its full table.
+    local_asn = 65000
+    router_id = "10.88.255.5"
+    hold_time = 90
+
+    [[peers]]
+    # Source address of the gateway's BGP session. Must match the router.
+    address = "10.1.0.1"
+    remote_asn = 65000
+    name = "gateway"
+    description = "Home gateway"
+    families = ["ipv4-unicast", "ipv6-unicast"]
+
+    [logging]
+    level = "info"
+    format = "pretty"
