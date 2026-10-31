@@ -15,11 +15,9 @@ spec:
       labels:
         app: rtmp-live-server
     spec:
-      nodeSelector:
-        ddlia.com/gpu: "true"
       securityContext:
-        # GID 44 (video) / 105 (render) for host /dev/dri access
-        supplementalGroups: [44, 105]
+        # GID 44 (video) / 992 (render) for host /dev/dri access
+        supplementalGroups: [44, 992]
       containers:
       - name: rtmp-live-server
         image: ghcr.io/technotut/rtmp-live-server:main@sha256:1e004f83b9addf5434085435711052008cc9001a57f9bbf055379a660751efc0
