@@ -22,7 +22,6 @@ spec:
         - name: backend
           image: ghcr.io/gmazoyer/reflet:v0.2.0
           imagePullPolicy: IfNotPresent
-          args: ["--config", "/etc/reflet/config.toml"]
           ports:
             - name: api
               containerPort: 8080
