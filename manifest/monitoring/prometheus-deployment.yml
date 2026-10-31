@@ -8,6 +8,8 @@ spec:
     matchLabels:
       app: prometheus
   replicas: 1
+  strategy:
+    type: Recreate
   template:
     metadata:
       labels:
@@ -19,8 +21,16 @@ spec:
           args:
             - "--config.file=/etc/prometheus/prometheus.yml"
             - "--storage.tsdb.path=/prometheus/"
+            - "--storage.tsdb.retention.time=7d"
+            - "--storage.tsdb.retention.size=80MB"
           ports:
             - containerPort: 9090
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              memory: 512Mi
           volumeMounts:
             - mountPath: /etc/prometheus
               name: prometheus-config

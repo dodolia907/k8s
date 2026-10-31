@@ -20,6 +20,8 @@ metadata:
   name: grafana
   namespace: monitoring
 spec:
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: grafana
@@ -34,7 +36,7 @@ spec:
           - 0
       containers:
         - name: grafana
-          image: grafana/grafana:latest
+          image: grafana/grafana:13.3.0
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
@@ -60,8 +62,10 @@ spec:
             timeoutSeconds: 1
           resources:
             requests:
-              cpu: 250m
-              memory: 750Mi
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              memory: 512Mi
           volumeMounts:
             - mountPath: /var/lib/grafana
               name: grafana-pv
@@ -78,7 +82,11 @@ kind: Service
 metadata:
   name: grafana
   namespace: monitoring
+  labels:
+    announce: bgp-v4
+    io.cilium/lb-pool: ula
 spec:
+  ipFamilyPolicy: PreferDualStack
   ports:
     - port: 3000
       protocol: TCP
