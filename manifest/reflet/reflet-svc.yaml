@@ -3,12 +3,17 @@ kind: Service
 metadata:
   name: reflet-service
   namespace: reflet
+  labels:
+    announce: bgp-v4
+    io.cilium/lb-pool: ula
   annotations:
     external-dns.alpha.kubernetes.io/hostname: looking-glass.k8s.ddlia.com
+    external-dns.alpha.kubernetes.io/provider: "pihole"
 spec:
   selector:
-    vm.kubevirt.io/name: dev
+    vm.kubevirt.io/name: reflet-vm
   type: LoadBalancer
+  ipFamilyPolicy: PreferDualStack
   ports:
     - name: ssh
       port: 22
