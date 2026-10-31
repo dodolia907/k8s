@@ -4,12 +4,14 @@ metadata:
   name: pihole-deployment
   labels:
     app: pihole
-  namespace: pi-hole
+  namespace: dns
 spec:
   selector:
     matchLabels:
       app: pihole
   replicas: 1
+  strategy:
+    type: Recreate
   template:
     metadata:
       labels:
@@ -22,7 +24,7 @@ spec:
 
       initContainers:
       - name: init-sync
-        image: docker.io/busybox:stable
+        image: docker.io/library/busybox:1.38
         command: ["/bin/sh", "-c"]
         args: ["cp -r /mnt-pvc/* /etc/pihole/ || true"]
         volumeMounts:
@@ -33,7 +35,7 @@ spec:
 
       containers:
       - name: pihole
-        image: ghcr.io/pi-hole/pihole:latest
+        image: ghcr.io/pi-hole/pihole:2026.10.1
         securityContext:
           capabilities:
             add:
@@ -51,12 +53,16 @@ spec:
         - name: FTLCONF_NTP_ENABLED
           value: "false"
         - name: FTLCONF_webserver_api_password
-          value: ""
-        volumeMounts:
-        - name: pihole-data
-          mountPath: /etc/pihole
-        - name: dnsmasq-data
-          mountPath: /etc/dnsmasq.d
+          valueFrom:
+            secretKeyRef:
+              name: pihole-api
+              key: password
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            memory: 384Mi
         lifecycle:
           preStop:
             exec:

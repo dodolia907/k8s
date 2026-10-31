@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: pihole-external-dns
-  namespace: pi-hole
+  namespace: dns
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -33,13 +33,13 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: pihole-external-dns
-  namespace: pi-hole
+  namespace: dns
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: pihole-external-dns
-  namespace: pi-hole
+  namespace: dns
 spec:
   strategy:
     type: Recreate
@@ -71,5 +71,17 @@ spec:
         - --pihole-api-version=6
         # Change this to the actual address of your Pi-hole web server
         - --pihole-server=http://pihole
+        env:
+        - name: EXTERNAL_DNS_PIHOLE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: pihole-api
+              key: password
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 128Mi
       securityContext:
         fsGroup: 65534 # For ExternalDNS to be able to read Kubernetes token files

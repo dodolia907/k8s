@@ -3,31 +3,24 @@ kind: CiliumLoadBalancerIPPool
 metadata:
   name: ipv4-bgp-pool
 spec:
+  # Avoid handing out the network address 10.88.0.0.
+  allowFirstLastIPs: "No"
   blocks:
     - cidr: "10.88.0.0/16"
 
 ---
 
-apiVersion: "cilium.io/v2"
-kind: CiliumLoadBalancerIPPool
-metadata:
-  name: ipv6-ndp-pool-gua
-spec:
-  blocks:
-    - cidr: "<NGN-Prefix>::beef:1/112"
-  serviceSelector:
-    matchLabels:
-      io.cilium/lb-pool: gua
-    
----
-
+# The GUA pool (ipv6-ndp-pool-gua) is not here: ra-prefix-controller owns it
+# because the RA prefix can change.
 apiVersion: "cilium.io/v2"
 kind: CiliumLoadBalancerIPPool
 metadata:
   name: ipv6-ndp-pool-ula
 spec:
+  # pi-hole pins the last address of this block.
+  allowFirstLastIPs: "Yes"
   blocks:
-    - cidr: "fd00:20::beef:1/112"
+    - cidr: "fd00:20::beef:0/112"
   serviceSelector:
     matchLabels:
       io.cilium/lb-pool: ula

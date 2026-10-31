@@ -1,83 +1,164 @@
-# Kubernetesのセットアップ  
-AlmaLinux 9を使用する． 
-## コンテナランタイムの準備  
-全てのノードで実施する．  
+# Kubernetesのセットアップ
+Debian 13.7.0を使用する．要件は [AGENTS.md](../AGENTS.md) を参照．
+
+`<...>` は実機の値に置き換える．以下は `enp2s0`，コントロールプレーン兼NFSサーバ `10.1.88.101` を前提とする．
+
+# リポジトリの取得
 ```
-## IPv4フォワーディングを有効化、iptablesからブリッジされたトラフィックを見えるようにする
+git clone --recurse-submodules https://github.com/dodolia907/k8s.git
+```
+
+# ノードの準備
+全てのノードで実施する．
+
+## OSのインストール
+`10.1.88.101` では，データ用ディスクにOSを入れないよう，ディスクを外すか `/dev/disk/by-id` で確認する．
+
+## 確認とswapの無効化
+MACアドレスと `product_uuid` がノード間で重複していないことを確認する．
+```
+ip link
+sudo cat /sys/class/dmi/id/product_uuid
+
+sudo swapoff -a
+## /etc/fstab のswapの行を削除する
+sudoedit /etc/fstab
+```
+
+## ネットワーク
+IPv4とULAは固定し，GUAはRAからSLAACで取得する．RA prefixは変わる可能性があるので，kubeletなどに設定しない．
+```
+## IPv4は /etc/network/interfaces に設定済み（10.1.88.x/16，ゲートウェイ 10.1.0.1）
+## ULAはノードごとに cp00: fd00:20::101，wk01〜wk03: fd00:20::151〜153
+sudo tee /etc/network/interfaces.d/enp2s0-ipv6 <<EOF
+iface enp2s0 inet6 static
+    address <このノードの固定ULA>/64
+    autoconf 1
+    accept_ra 2
+EOF
+
+## APIサーバの名前はクラスタ内のPi-holeに依存させない
+echo "10.1.88.101 k8s-api.internal" | sudo tee -a /etc/hosts
+```
+
+カーネルの設定
+```
 cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf
 overlay
 br_netfilter
 EOF
-
 sudo modprobe overlay
 sudo modprobe br_netfilter
 
-# この構成に必要なカーネルパラメーター、再起動しても値は永続します
 cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
 net.bridge.bridge-nf-call-iptables  = 1
 net.bridge.bridge-nf-call-ip6tables = 1
 net.ipv4.ip_forward                 = 1
-net.ipv6.conf.all.forwarding = 1
-net.ipv6.conf.default.forwarding = 1
+net.ipv6.conf.all.forwarding        = 1
+net.ipv6.conf.default.forwarding    = 1
+## forwarding有効時もRAを受ける
+net.ipv6.conf.enp2s0.accept_ra      = 2
+net.ipv6.conf.enp2s0.autoconf       = 1
 EOF
-
-# 再起動せずにカーネルパラメーターを適用
 sudo sysctl --system
 
-lsmod | grep br_netfilter
-lsmod | grep overlay
-
-sysctl net.bridge.bridge-nf-call-iptables net.bridge.bridge-nf-call-ip6tables net.ipv4.ip_forward net.ipv6.conf.all.forwarding net.ipv6.conf.default.forwarding
+## GUAとRAの経路を確認
+ip -6 addr show dev enp2s0 scope global
+ip -6 route show default
 ```
-CRI-Oのインストール  
-https://github.com/cri-o/packaging/blob/main/README.md#usage
-```
-## リポジトリの追加
-KUBERNETES_VERSION=v1.36
-CRIO_VERSION=v1.35
 
-cat <<EOF | sudo tee /etc/yum.repos.d/kubernetes.repo
-[kubernetes]
-name=Kubernetes
-baseurl=https://pkgs.k8s.io/core:/stable:/$KUBERNETES_VERSION/rpm/
-enabled=1
-gpgcheck=1
-gpgkey=https://pkgs.k8s.io/core:/stable:/$KUBERNETES_VERSION/rpm/repodata/repomd.xml.key
+## containerdのインストール
+https://github.com/containerd/containerd/blob/main/docs/getting-started.md の Option 2 に従い，Dockerのaptリポジトリから `containerd.io` を入れる．runcは同梱されている．CNIはCiliumが入れるので，CNI pluginsは入れない．
+```
+sudo apt update
+sudo apt install -y ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+sudo tee /etc/apt/sources.list.d/docker.sources <<EOF
+Types: deb
+URIs: https://download.docker.com/linux/debian
+Suites: $(. /etc/os-release && echo "$VERSION_CODENAME")
+Components: stable
+Architectures: $(dpkg --print-architecture)
+Signed-By: /etc/apt/keyrings/docker.asc
 EOF
 
-cat <<EOF | sudo tee /etc/yum.repos.d/cri-o.repo
-[cri-o]
-name=CRI-O
-baseurl=https://download.opensuse.org/repositories/isv:/cri-o:/stable:/$CRIO_VERSION/rpm/
-enabled=1
-gpgcheck=1
-gpgkey=https://download.opensuse.org/repositories/isv:/cri-o:/stable:/$CRIO_VERSION/rpm/repodata/repomd.xml.key
-EOF
+sudo apt update
+## 入るバージョンがKubernetes 1.37に対応していることを確認する
+apt list --all-versions containerd.io
+sudo apt install -y containerd.io
+sudo apt-mark hold containerd.io
 ```
 
-## kubeadm、kubelet、kubectlのインストール
+設定．パッケージの既定の設定はCRIが無効なので，生成し直す．
 ```
-sudo dnf install -y container-selinux
-sudo dnf install -y cri-o kubelet kubeadm kubectl
-sudo systemctl enable --now crio.service
-sudo systemctl enable kubelet.service
-sudo systemctl disable --now firewalld
+containerd config default | sudo tee /etc/containerd/config.toml
+sudo sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
+## disabled_plugins に cri がないこと，SystemdCgroup = true であることを確認
+grep -nE 'disabled_plugins|SystemdCgroup' /etc/containerd/config.toml
+sudo systemctl restart containerd
 ```
 
-## クラスタの初期化
+## kubeadm，kubelet，kubectlのインストール
+https://kubernetes.io/ja/docs/setup/production-environment/tools/kubeadm/install-kubeadm/
 ```
-## kubeadm join... と表示されるので、後でワーカーノードで使うためにメモしておく
-## pod-network-cidrは他と被らない任意のCIDRを指定する
-sudo kubeadm init --pod-network-cidr=10.8.0.0/16,fdf6:ad60:1db0:feed::/56 --service-cidr=10.96.0.0/12,fdf6:ad60:1db0:beef::/112 --skip-phases=addon/kube-proxy
-## kubectlをroot以外のユーザーでも使えるようにする
+sudo apt-get update
+sudo apt-get install -y apt-transport-https ca-certificates curl gpg nfs-common
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.37/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.37/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+sudo apt-get update
+sudo apt-get install -y kubelet kubeadm kubectl
+sudo apt-mark hold kubelet kubeadm kubectl
+sudo systemctl enable --now kubelet
+```
+
+sandboxイメージをkubeadmに合わせる．
+```
+kubeadm config images list | grep pause
+## 上の値と異なれば，/etc/containerd/config.toml の sandbox を書き換えて再起動する
+grep -n sandbox /etc/containerd/config.toml
+sudo systemctl restart containerd
+```
+
+# NFSサーバのセットアップ
+`10.1.88.101` で実施する．**指定したディスクの内容は全て消える．**
+```
+sudo apt install -y nfs-kernel-server
+ls -l /dev/disk/by-id/
+sudo mkfs.ext4 /dev/disk/by-id/<データ用ディスク>
+sudo mkdir -p /ext
+echo "UUID=$(sudo blkid -s UUID -o value /dev/disk/by-id/<データ用ディスク>) /ext ext4 defaults,nofail 0 2" | sudo tee -a /etc/fstab
+sudo mount /ext
+echo "/ext 10.1.88.0/24(rw,sync,no_root_squash,no_subtree_check)" | sudo tee -a /etc/exports
+sudo exportfs -ra
+sudo systemctl enable --now nfs-kernel-server
+```
+`no_root_squash` はPi-holeなどrootで動くPodの書き込みに使う．不要と確認できたら外す．
+
+# クラスタの初期化
+デュアルスタックの設定は [kubeadm/init-config.yaml](kubeadm/init-config.yaml) にある．`node-ip` を実機の値にしてから実行する．
+```
+cd ~/k8s/install/kubeadm
+sudoedit init-config.yaml
+sudo kubeadm init --config init-config.yaml
+
 mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ```
 
-## ネットワークのセットアップ
-Ciliumを使用する．  
-Cilium CLIのインストール
+# Ciliumのインストール
+最新の安定版を確認し，[argocd/apps/cilium.yaml](argocd/apps/cilium.yaml) のバージョンと揃える．
+```
+curl -s https://raw.githubusercontent.com/cilium/cilium/main/stable.txt
+
+curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-4 | bash
+helm install cilium cilium --repo https://helm.cilium.io --version 1.20.4 -n kube-system -f ~/k8s/install/cilium/values.yaml
+```
+
+Cilium CLIのインストールと確認
 ```
 CILIUM_CLI_VERSION=$(curl -s https://raw.githubusercontent.com/cilium/cilium-cli/main/stable.txt)
 CLI_ARCH=amd64
@@ -86,176 +167,103 @@ curl -L --fail --remote-name-all https://github.com/cilium/cilium-cli/releases/d
 sha256sum --check cilium-linux-${CLI_ARCH}.tar.gz.sha256sum
 sudo tar xzvfC cilium-linux-${CLI_ARCH}.tar.gz /usr/local/bin
 rm cilium-linux-${CLI_ARCH}.tar.gz{,.sha256sum}
-```
 
-Ciliumのインストール
-```
-cilium install \
-  --version 1.19.3 \
-  --set ipv4.enabled=true \
-  --set ipv6.enabled=true \
-  --set routingMode=native \
-  --set ipam.mode=kubernetes \
-  --set ipv4NativeRoutingCIDR="10.8.0.0/16" \
-  --set ipv6NativeRoutingCIDR="fdf6:ad60:1db0:feed::/56" \
-  --set autoDirectNodeRoutes=true \
-  --set kubeProxyReplacement=true \
-  --set l2announcements.enabled=true \
-  --set bgpControlPlane.enabled=true \
-  --set k8sRequireIPv4PodCIDR=true \
-  --set k8sRequireIPv6PodCIDR=true \
-  --set hubble.relay.enabled=true \
-  --set hubble.ui.enabled=true \
-  --set devices=enp3s0 \
-  --set enableIPv4Masquerade=false \
-  --set enableIPv6Masquerade=true \
-  --set k8sServiceHost=10.1.88.101 \
-  --set k8sServicePort=6443 \
-  --set ingressController.enabled=true \
-  --set ingressController.loadbalancerMode=shared
-
-## Ingress ServiceをBGPでアナウンスするようにする
-kubectl patch service cilium-ingress -n kube-system -p '{"metadata": {"labels": {"announce": "bgp-v4"}}}'
-## Ingress ServiceをDual-Stackに変更する
-kubectl patch service cilium-ingress -n kube-system -p '{"metadata": {"labels": {"io.cilium/lb-pool": "ula"}}}'
-kubectl patch service cilium-ingress -n kube-system -p '{"spec": {"ipFamilyPolicy": "PreferDualStack", "ipFamilies": ["IPv4", "IPv6"]}}'
-
-## 設定適用
-cd install/cilium
-kubectl apply -f .
-```
-
-
-## 一旦確認
-```
 cilium status --wait
-watch kubectl get pod -A -o wide
 ```
 
-## テスト
+# ワーカーノードのクラスタへの参加
 ```
-cilium connectivity test
-```
+## コントロールプレーンノードで実行する．トークンとハッシュをコミットしないこと
+kubeadm token create --print-join-command
 
-## ワーカーノードのクラスタへの参加
-```
-## コントロールプレーンノードで実行したkubeadm initの結果 kubeadm join ... を実行する
-kubeadm join ...
-```
+## ワーカーノードで実行する
+cd ~/k8s/install/kubeadm
+sudoedit join-config.yaml
+sudo kubeadm join --config join-config.yaml
 
-## ルーターの設定
-ここではNEC IXルータを用いる。
+## 確認．全ノードにIPv4とULAがあること
+kubectl get nodes -o wide
+kubectl get nodes -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.spec.podCIDRs}{"\n"}{end}'
+
 ```
-## ルーターにSSH接続する
-## グローバルコンフィグモードに移行
+`/dev/dri` は全ノードにある．GIDは `getent group video render` で確認し，[manifest/live/deployment.yaml](../manifest/live/deployment.yaml) の `supplementalGroups` に合わせる．
+
+# ルーターの設定
+IPv4のLB IPとPodCIDRをBGPで受ける．ルーターのAS番号は65000，クラスタのAS番号は64512．ピアのアドレスは [cilium/v4-bgp.yaml](cilium/v4-bgp.yaml) に合わせる．
+
+NEC IXルータの場合
+```
 enable-config
-## BGP起動・BGPコンフィグモードに移行 (ルータ自身のAS番号を入力)
 router bgp 65000
-## 新規ピア設定 (全てのコントロールプレーン・ワーカーノードのIPアドレスを入力)
-neighbor [ノード1のIPアドレス] remote-as 64512
-neighbor [ノード2のIPアドレス] remote-as 64512
-neighbor [ノード3のIPアドレス] remote-as 64512
-neighbor [ノード4のIPアドレス] remote-as 64512
-## グローバルコンフィグモードに戻る
+## 全てのノードのIPアドレスを入力
+neighbor <ノードのIPアドレス> remote-as 64512
 exit
-## 設定保存
 write memory
-## 確認 (StateがESTABLISHEDになっていればOK)
+## StateがESTABLISHEDになっていればOK
 show ip bgp summary
 ```
 
+IPv6はL2（NDP）で広報する．ルーターがRA prefixをWANとLANで共有している（ND proxy）場合，GUAのLB IPのNDPも中継できることを確認する．
 
-# NFSサーバのセットアップ
+# Argo CDのインストール
+ここから先はArgo CDが管理する．事前に，このリポジトリの変更をGitHubへpushしておく．
 ```
-## NFSサーバにSSH接続する
-mkdir -p /ext
-sudo dnf install -y nfs-utils
-echo "/ext 10.1.88.0/24(rw,sync,no_root_squash,no_subtree_check)" | sudo tee -a /etc/exports
-sudo systemctl enable --now rpcbind nfs-server
-```
+cd ~/k8s
+kubectl apply --server-side --force-conflicts -k install/argocd
 
-# NFSクライアントのセットアップ
-```
-## 全てのノードで実施
-sudo dnf install -y nfs-utils
-```
-
-# nfs-subdir-external-provisionerのインストール
-```
-## Helmのインストール
-curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
-## nfs-subdir-external-provisionerのインストール
-helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
-helm install nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner --set nfs.server=10.1.88.101 --set nfs.path=/ext --namespace nfs-provisioner --create-namespace
-```
-
-# pi-holeのインストール
-```
-git clone https://github.com/dodolia907/k8s.git
-cd ~/k8s/install/pi-hole
-kubectl create ns pi-hole
-kubectl apply -f .
-```
-
-# external-dnsのインストール
-```
-## 宅内環境
-cd ~/k8s/install/external-dns
-kubectl apply -f pi-hole.yaml
-
-## Cloudflare IPv6 DNS
-## Zone/DNS/Edit，Zone/Zone/Readの権限を持つAPIトークンを作成する．
-kubectl create secret generic cloudflare-api-key --from-literal=apiKey=YOUR_API_TOKEN -n cloudflare
-kubectl apply -f cloudflare.yaml
-```
-
-## ArgoCDのインストール
-```
-kubectl create namespace argocd
-kubectl apply -n argocd --server-side --force-conflicts -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.4.1/manifests/install.yaml
-kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}'
-kubectl patch svc argocd-server -n argocd -p '{"metadata": {"labels": {"announce": "bgp-v4"}}}'
-kubectl patch svc argocd-server -n argocd -p '{"metadata": {"annotations": {"external-dns.alpha.kubernetes.io/provider": "pihole"}}}'
-kubectl patch svc argocd-server -n argocd -p '{"metadata": {"annotations": {"external-dns.alpha.kubernetes.io/hostname": "cd.svc.ddlia.com"}}}'
 cd /usr/local/bin
 sudo curl -L https://github.com/argoproj/argo-cd/releases/download/v3.4.1/argocd-linux-amd64 -o argocd
 sudo chmod +x argocd
 argocd admin initial-password -n argocd
-argocd login cd.svc.ddlia.com
+kubectl -n argocd get svc argocd-server
+argocd login <argocd-serverのLB IP>
 argocd account update-password
 ```
 
-## cloudflaredのインストール
+`cilium-ingress` のチャートにはIPファミリーの設定がないので，デュアルスタックだけ手動で設定する．
 ```
-cd ~/k8s/install/cloudflared
-kubectl create namespace cloudflare
-vim token.yaml
-kubectl apply -f token.yaml
-kubectl apply -f tunnel.yaml
+kubectl patch service cilium-ingress -n kube-system -p '{"spec": {"ipFamilyPolicy": "PreferDualStack", "ipFamilies": ["IPv4", "IPv6"]}}'
 ```
 
-## KubeVirtのインストール
+# Secretの作成
+公開リポジトリなので，Secretは `kubeseal` で暗号化してコミットする．コントローラはArgo CDが入れる．
 ```
-export RELEASE=$(curl https://storage.googleapis.com/kubevirt-prow/release/kubevirt/kubevirt/stable.txt)
-kubectl apply -f https://github.com/kubevirt/kubevirt/releases/download/${RELEASE}/kubevirt-operator.yaml
-kubectl apply -f https://github.com/kubevirt/kubevirt/releases/download/${RELEASE}/kubevirt-cr.yaml
+KUBESEAL_VERSION=0.41.2
+curl -L https://github.com/bitnami-labs/sealed-secrets/releases/download/v${KUBESEAL_VERSION}/kubeseal-${KUBESEAL_VERSION}-linux-amd64.tar.gz | tar xz kubeseal
+sudo install -m 755 kubeseal /usr/local/bin/kubeseal
+
+seal() { kubeseal --controller-name sealed-secrets-controller --controller-namespace kube-system -o yaml > ~/k8s/install/sealed/$1.yaml; }
+
+## Pi-hole APIのパスワード．Pi-holeとexternal-dnsで同じSecret名を使う
+kubectl create secret generic pihole-api -n dns --from-literal=password=<パスワード> --dry-run=client -o yaml | seal pihole-api
+
+## Cloudflare Tunnelのトークン
+kubectl create secret generic tunnel-token -n tunnel --from-literal=token=<トークン> --dry-run=client -o yaml | seal tunnel-token
+
+## Cloudflare APIトークン (Zone/DNS/Edit，Zone/Zone/Read)
+kubectl create secret generic cloudflare-api-key -n dns --from-literal=apiKey=<トークン> --dry-run=client -o yaml | seal cloudflare-api-key
 ```
 
-## virtctlのインストール
-```
-export VERSION=$(curl https://storage.googleapis.com/kubevirt-prow/release/kubevirt/kubevirt/stable.txt)
-curl -L https://github.com/kubevirt/kubevirt/releases/download/${VERSION}/virtctl-${VERSION}-linux-amd64 -o virtctl
-sudo mv virtctl /usr/local/bin/
-sudo chmod +x /usr/local/bin/virtctl
-## Containerized Data Importerのインストール
-export VERSION=$(basename $(curl -s -w %{redirect_url} https://github.com/kubevirt/containerized-data-importer/releases/latest))
-kubectl create -f https://github.com/kubevirt/containerized-data-importer/releases/download/$VERSION/cdi-operator.yaml
-kubectl create -f https://github.com/kubevirt/containerized-data-importer/releases/download/$VERSION/cdi-cr.yaml
-```
+cloud-consoleに必要なものは [manifest/cloud-console/README.md](../manifest/cloud-console/README.md) を参照．Secretは同じ手順で暗号化する．
 
-## metrics-serverのインストール (ArgoCD)
+コミットしてpushすると，Argo CDが同期する．
+
+**復号鍵のバックアップ．** クラスタを作り直すと復号できなくなるので，オフラインに保管する．この出力は絶対にコミットしない．
 ```
-kubectl apply -f ~/k8s/install/argocd/metrics-server.yaml
+kubectl get secret -n kube-system -l sealedsecrets.bitnami.com/sealed-secrets-key -o yaml > sealed-secrets-key.yaml
+```
+復元するときは，コントローラを入れる前後で `kubectl apply -f sealed-secrets-key.yaml` を実行し，コントローラを再起動する．
+
+# 確認
+```
+kubectl -n argocd get applications
+cilium connectivity test
+
+## RA prefixへの追従
+kubectl -n kube-system logs deploy/ra-prefix-controller
+kubectl get ciliumloadbalancerippools
+
+## メモリの余力
 kubectl top nodes
 ```
 
@@ -270,11 +278,10 @@ sudo reboot
 ```
 
 # 参考資料
-https://kubernetes.io/ja/docs/setup/production-environment/tools/kubeadm/install-kubeadm/  
-https://kubernetes.io/ja/docs/setup/production-environment/container-runtimes/  
-https://kubernetes.io/ja/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/  
-https://kubernetes.io/docs/setup/production-environment/container-runtimes/#containerd-systemd  
-
-https://kubevirt.io/user-guide/cluster_admin/installation/#installing-kubevirt-on-kubernetes  
-https://kubevirt.io/user-guide/user_workloads/virtctl_client_tool/  
-https://kubevirt.io/labs/kubernetes/lab2.html
+https://kubernetes.io/ja/docs/setup/production-environment/tools/kubeadm/install-kubeadm/
+https://kubernetes.io/ja/docs/setup/production-environment/container-runtimes/#containerd
+https://github.com/containerd/containerd/blob/main/docs/getting-started.md
+https://docs.docker.com/engine/install/debian/
+https://kubernetes.io/ja/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/
+https://docs.cilium.io/en/stable/network/l2-announcements/
+https://kubevirt.io/user-guide/cluster_admin/installation/#installing-kubevirt-on-kubernetes

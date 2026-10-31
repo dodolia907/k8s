@@ -3,7 +3,11 @@ kind: Service
 metadata:
   name: prometheus
   namespace: monitoring
+  labels:
+    announce: bgp-v4
+    io.cilium/lb-pool: ula
 spec:
+  ipFamilyPolicy: PreferDualStack
   selector: 
     app: prometheus
   type: LoadBalancer

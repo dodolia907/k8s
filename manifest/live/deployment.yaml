@@ -16,17 +16,23 @@ spec:
         app: rtmp-live-server
     spec:
       securityContext:
-        # GID 44 (video) / 105 (render) for host /dev/dri access
-        supplementalGroups: [44, 105]
+        # GID 44 (video) / 992 (render) for host /dev/dri access
+        supplementalGroups: [44, 992]
       containers:
       - name: rtmp-live-server
-        image: ghcr.io/technotut/rtmp-live-server:main
-        imagePullPolicy: Always
+        image: ghcr.io/technotut/rtmp-live-server:main@sha256:1e004f83b9addf5434085435711052008cc9001a57f9bbf055379a660751efc0
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 1935
         - containerPort: 8080
         securityContext:
           privileged: false
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            memory: 1Gi
         volumeMounts:
           - name: dev-dri
             mountPath: /dev/dri
@@ -62,12 +68,18 @@ spec:
     spec:
       containers:
         - name: dashboard
-          image: ghcr.io/technotut/rtmp-live-server-dashboard:main
-          imagePullPolicy: Always
+          image: ghcr.io/technotut/rtmp-live-server-dashboard:main@sha256:d7de3bfa16074c414e5d9c3966799d91e0f31c016bb5fe466c9d7067fe83d1f1
+          imagePullPolicy: IfNotPresent
           ports:
             - name: http
               containerPort: 3000
               protocol: TCP
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
           env:
             - name: RTMP_STAT_URL
               value: "http://rtmp-service:80/stat"

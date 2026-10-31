@@ -1,18 +1,29 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: cloud-console
+  name: kubevirt
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
 spec:
   project: default
   source:
     repoURL: https://github.com/dodolia907/k8s.git
     targetRevision: HEAD
-    path: manifest/cloud-console
+    path: install/kubevirt
   destination:
     server: https://kubernetes.default.svc
-    namespace: cloud-console
+    namespace: default
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
+    retry:
+      limit: 10
+      backoff:
+        duration: 30s
+        factor: 2
+        maxDuration: 10m
+    syncOptions:
+      - ServerSideApply=true
+      - SkipDryRunOnMissingResource=true

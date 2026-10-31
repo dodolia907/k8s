@@ -4,13 +4,17 @@ metadata:
   name: time-service
   labels:
     app: time
+    announce: bgp-v4
+    io.cilium/lb-pool: ula
   namespace: time
   annotations:
     external-dns.alpha.kubernetes.io/hostname: time.k8s.ddlia.com
+    external-dns.alpha.kubernetes.io/provider: "pihole"
 spec:
   selector:
     app: time
   type: LoadBalancer
+  ipFamilyPolicy: PreferDualStack
   ports:
     - name: http
       protocol: TCP

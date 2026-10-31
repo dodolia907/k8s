@@ -1,0 +1,54 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tunnel
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: storage
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitoring
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: live
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: murchace
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: speedtest
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: time
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nginx-test
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dev
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: reflet
