@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cloud-console
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/dodolia907/k8s.git
+    targetRevision: HEAD
+    path: manifest/cloud-console
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cloud-console
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
