@@ -9,4 +9,4 @@ resources:
 configMapGenerator:
   - name: discord-tts-bot
     literals:
-      - ACTIVITY_NAME=VCのチャットを読み上げ
+      - ACTIVITY_NAME=DDlia Networks Sapporo (CTS)
