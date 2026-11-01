@@ -3,6 +3,7 @@ kind: Kustomization
 namespace: discord-tts
 resources:
   - rbac.yaml
+  - pvc.yaml
   - deployment.yaml
   - networkpolicy.yaml
 # The name gets a content hash, so changing a value restarts the bot.
