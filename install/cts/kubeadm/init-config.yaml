@@ -1,0 +1,30 @@
+# 札幌（cts）の単一ノードクラスタ。<...> は実機の値に置き換える。
+# VPNで経路を交換するので、PodとServiceのCIDRはtyhと分ける。
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: InitConfiguration
+localAPIEndpoint:
+  advertiseAddress: <ctsノードのIPv4>
+nodeRegistration:
+  criSocket: unix:///run/containerd/containerd.sock
+  kubeletExtraArgs:
+    - name: node-ip
+      value: <ctsノードのIPv4>
+skipPhases:
+  - addon/kube-proxy
+---
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: ClusterConfiguration
+controlPlaneEndpoint: <ctsノードのIPv4>:6443
+networking:
+  podSubnet: 10.9.0.0/16
+  serviceSubnet: 10.112.0.0/12
+---
+apiVersion: kubelet.config.k8s.io/v1beta1
+kind: KubeletConfiguration
+cgroupDriver: systemd
+systemReserved:
+  memory: 512Mi
+kubeReserved:
+  memory: 512Mi
+evictionHard:
+  memory.available: 256Mi

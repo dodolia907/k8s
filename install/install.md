@@ -313,6 +313,130 @@ kubectl get ciliumloadbalancerippools
 kubectl top nodes
 ```
 
+# 札幌クラスタ（cts）
+豊橋（tyh）とは別の単一ノードクラスタとして，Windowsの上のHyper-V VMに建てる．J:COMはIPv4のみなので，シングルスタックにする．tyhを操作できる管理マシンからVPN経由で操作し，`manifest/cts/` のアプリはtyhのArgo CDが同期する．
+
+| 項目 | tyh | cts |
+|---|---|---|
+| PodCIDR | `10.8.0.0/16` | `10.9.0.0/16` |
+| Service | `10.96.0.0/12` | `10.112.0.0/12` |
+| LBプール | `10.88.0.0/16` | `10.89.0.0/24` |
+| AS番号 | 64512 | 64513 |
+
+札幌のLANがこれらと重なるときは，`install/cts/` の値を変える．
+
+## VMの作成
+Hyper-Vが使えるWindowsのエディション（ProやEnterpriseなど）で，管理者のPowerShellから実行する．WSL2はLANから直接到達できる構成にしにくいので使わず，WindowsノードはCiliumが対応していないので使わない．ホストのメモリに余裕がなければ `-MemoryStartupBytes` を減らす．
+```
+Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All
+## 再起動後
+Get-NetAdapter
+New-VMSwitch -Name external -NetAdapterName "<NIC名>" -AllowManagementOS $true
+New-VM -Name cts01 -Generation 2 -MemoryStartupBytes 10GB -NewVHDPath "<保存先>\cts01.vhdx" -NewVHDSizeBytes 128GB -SwitchName external
+Set-VM -Name cts01 -ProcessorCount 4 -StaticMemory -CheckpointType Disabled -AutomaticStartAction Start -AutomaticStopAction ShutDown
+Set-VMFirmware -VMName cts01 -SecureBootTemplate MicrosoftUEFICertificateAuthority
+Add-VMDvdDrive -VMName cts01 -Path "<Debian 13.7.0のISO>"
+Set-VMFirmware -VMName cts01 -FirstBootDevice (Get-VMDvdDrive -VMName cts01)
+Start-VM -Name cts01
+```
+ホストの再起動でctsも止まるので，Windows Updateの再起動の時間を調整しておく．
+
+## ノードの準備
+DebianをインストールしてIPv4を固定する．続けて，「ノードの準備」のうちswapの無効化，カーネルの設定，containerd，kubeadmの手順を実施する．次の点は読み替える．
+- NICは `ip link` で確認する．`eth0` でなければ [cts/cilium/values.yaml](cts/cilium/values.yaml) の `devices` を変える．
+- ULAとRAの設定，`enp2s0` のsysctl，`/etc/hosts`，NFSは不要．
+- `net.ipv6.conf.*` のforwardingの行も不要．
+
+## ルーターの設定
+Si-R（AS65001）にctsノードをAS64513のネイバーとして追加し，`10.89.0.0/24` だけを受け取って，IXへ広報する．
+
+tyhのArgo CDはPodのIP（`10.8.x.x`）のままctsのAPIに接続する．次を確認する．
+- Si-Rが `10.1.0.0/16`，`10.8.0.0/16`，`10.88.0.0/16` の経路を持つこと．
+- IXとFortiGateが，札幌のLANと `10.89.0.0/24` の経路を持ち，ネクストホップに到達できること．届かなければFortiGateで `next-hop-self` を有効にする．
+- FortiGateで，`10.8.0.0/16` から札幌ノードの6443番への通信を許可すること．このポリシーではNATを無効にする．
+- 6443番とSSHはSi-Rでポート開放しないこと．
+
+## クラスタの初期化
+ctsノードで実行する．
+```
+cd ~/k8s/install/cts/kubeadm
+sudoedit init-config.yaml
+sudo kubeadm init --config init-config.yaml
+## 単一ノードなのでコントロールプレーンにPodを載せる
+sudo KUBECONFIG=/etc/kubernetes/admin.conf kubectl taint nodes --all node-role.kubernetes.io/control-plane-
+
+## ctsノード上でもkubectlを使えるようにする
+mkdir -p $HOME/.kube
+sudo install -m 600 -o "$(id -u)" -g "$(id -g)" /etc/kubernetes/admin.conf $HOME/.kube/config
+```
+
+以降はtyhを操作できる管理マシンで実行する．この管理者権限の設定ファイルは絶対にコミットしない．`values.yaml` と `bgp.yaml` に入れた実アドレスもコミットしない（作業用のコピーを編集してもよい）．tyhと同じ版にするため，`containerd.io` と `kubeadm` などはaptでバージョンを指定して入れる．
+```
+ssh <ctsノード> sudo cat /etc/kubernetes/admin.conf > ~/.kube/cts.conf
+chmod 600 ~/.kube/cts.conf
+export KUBECONFIG=~/.kube/cts.conf
+kubectl get nodes
+
+cd ~/k8s
+sudoedit install/cts/cilium/values.yaml
+sudoedit install/cts/cilium/bgp.yaml
+helm upgrade --install cilium cilium --repo https://helm.cilium.io --version 1.20.4 -n kube-system -f install/cts/cilium/values.yaml
+cilium status --wait
+kubectl apply -f install/cts/namespaces.yaml
+kubectl apply -k install/cts/cilium/
+kubectl apply -f install/cts/argocd/rbac.yaml
+kubectl apply -k install/metrics-server/
+helm upgrade --install sealed-secrets-controller sealed-secrets --repo https://bitnami.github.io/sealed-secrets --version 2.22.0 -n kube-system -f install/sealed-secrets/values.yaml
+
+cilium bgp peers
+```
+
+## Secretの作成とTunnel
+Web公開用のTunnelは `k8s-ingress-cts` にする．`k8s-ingress` にするとtyhの経路を上書きする．external-dnsは入れない．
+```
+export KUBECONFIG=~/.kube/cts.conf
+kubectl create secret generic cloudflare-tunnel-ingress -n tunnel --from-literal=api_token=<トークン> --from-literal=account_id=<アカウントID> --from-literal=tunnel_name=k8s-ingress-cts --dry-run=client -o yaml \
+  | kubeseal --controller-name sealed-secrets-controller --controller-namespace kube-system -o yaml > ~/k8s/install/cts/sealed/cloudflare-tunnel-ingress.yaml
+kubectl apply -f install/cts/sealed/cloudflare-tunnel-ingress.yaml
+helm upgrade --install cloudflare-tunnel-ingress-controller cloudflare-tunnel-ingress-controller --repo https://helm.strrl.dev --version 0.1.0 -n tunnel -f install/cts/cloudflared/ingress-controller-values.yaml
+
+## 復号鍵のバックアップ．tyhとは別の鍵なので，別に保管する．絶対にコミットしない
+kubectl get secret -n kube-system -l sealedsecrets.bitnami.com/sealed-secrets-key -o yaml > sealed-secrets-key-cts.yaml
+```
+
+## tyhのArgo CDへの登録
+`namespaces` に書いた名前空間だけをArgo CDが操作する．アプリを増やすときは，ここと [cts/argocd/rbac.yaml](cts/argocd/rbac.yaml) に追加する．`argocd-manager` のトークンはtyhの鍵で暗号化する．
+```
+TOKEN=$(KUBECONFIG=~/.kube/cts.conf kubectl -n kube-system get secret argocd-manager-token -o jsonpath='{.data.token}' | base64 -d)
+CA=$(KUBECONFIG=~/.kube/cts.conf kubectl -n kube-system get secret argocd-manager-token -o jsonpath='{.data.ca\.crt}')
+
+unset KUBECONFIG
+kubectl create secret generic cluster-cts -n argocd \
+  --from-literal=name=cts \
+  --from-literal=server=https://<ctsノードのIPv4>:6443 \
+  --from-literal=namespaces=nginx-test \
+  --from-literal=config="{\"bearerToken\":\"$TOKEN\",\"tlsClientConfig\":{\"caData\":\"$CA\"}}" \
+  --dry-run=client -o yaml \
+  | kubectl label --local -f - argocd.argoproj.io/secret-type=cluster -o yaml \
+  | kubeseal --controller-name sealed-secrets-controller --controller-namespace kube-system -o yaml > ~/k8s/install/sealed/cluster-cts.yaml
+kubectl apply -f install/sealed/cluster-cts.yaml
+argocd cluster list
+```
+[argocd/apps/cts-nginx-test.yaml](argocd/apps/cts-nginx-test.yaml) はGitHubへpushするとtyhのArgo CDに作られる．登録が済むまでは同期エラーになるので，登録してからpushする．
+
+## 確認
+```
+kubectl -n argocd get application cts-nginx-test
+
+## tyhのノードとPodから到達を確認する
+KUBECONFIG=~/.kube/cts.conf kubectl -n nginx-test get svc nginx
+traceroute <札幌のLB IP>
+curl http://<札幌のLB IP>/
+
+## Tunnel経由で確認する
+curl https://test-cts.ddlia.com/
+```
+
 # リセット
 ```
 sudo kubeadm reset

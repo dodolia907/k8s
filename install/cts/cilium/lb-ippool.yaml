@@ -1,0 +1,8 @@
+apiVersion: "cilium.io/v2"
+kind: CiliumLoadBalancerIPPool
+metadata:
+  name: ipv4-bgp-pool
+spec:
+  allowFirstLastIPs: "No"
+  blocks:
+    - cidr: "10.89.0.0/24"

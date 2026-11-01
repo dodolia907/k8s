@@ -18,6 +18,14 @@
   - RA prefixを使うのは、ノードのGUA（SLAAC）と外部公開用LBのみ。
   - forwardingを有効にするため、ノードのNICは `accept_ra=2` にする。
 
+## 拠点の要件
+- 豊橋を `tyh`、札幌を `cts` と呼ぶ。この文書の要件は、例外を書かない限り両拠点に適用する。
+- `cts` は `tyh` と別の単一ノードクラスタで、WindowsのHyper-V上のDebian VMに建てる。設定は [install/cts/](install/cts/) と [manifest/cts/](manifest/cts/) に置く。
+- `cts` はIPv4シングルスタックとする（J:COMがIPv4のみのため）。IPv6、RA prefix、L2広報の要件、`ra-prefix-controller` は適用しない。LB IPだけをBGPでSi-Rへ広報し、Podの外向き通信はマスカレードする。
+- `cts` のシステムコンポーネントは `tyh` のノードからHelmとkubectlで適用し、`manifest/cts/` のアプリは `tyh` のArgo CDで管理する。Argo CDの権限は、対象アプリの名前空間に絞る。
+- BGPの経路は `cts` ノード（AS64513）- Si-R（AS65001）- VPN - NEC IX（AS65000）- FortiGate（AS65000）- `tyh` ノード（AS64512）。
+- Web公開の `cts` 用Tunnelは `k8s-ingress-cts` にする。API、SSHはポート開放せず、VPN経由で操作する。
+
 ## RA prefix自動追従の要件
 - CronJobではなく、Kubernetesのプラグインとして導入できるコントローラにする。
 - プラグインは別リポジトリで管理し、submoduleとして参照する（[dodolia907/ra-prefix-controller](https://github.com/dodolia907/ra-prefix-controller)、[plugins/ra-prefix-controller/](plugins/ra-prefix-controller/)）。変更は先にプラグイン側へ入れ、こちらでは参照先コミットを更新する。

@@ -10,7 +10,9 @@ install/argocd/      Argo CDのHelm値とApp of Apps（apps/ に manifest/ の�
 install/kubeadm/     kubeadmの設定（デュアルスタック）
 install/cilium/      Ciliumのvaluesと、BGP / L2 / LBプールの設定
 install/sealed/      暗号化済みのSecret（手動で適用）
+install/cts/         札幌クラスタの基盤（IPv4のみ、手動で適用）
 install/*            DNS、Tunnel、KubeVirtなどの基盤（Argo CD管理外、手動で適用）
+manifest/cts/*       札幌クラスタのアプリケーション（豊橋のArgo CDが管理）
 manifest/*           アプリケーション（Argo CD管理）
 plugins/*            別リポジトリのプラグイン（submodule）
 ```

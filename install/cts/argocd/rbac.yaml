@@ -1,0 +1,31 @@
+# Credentials for the Argo CD on tyh. It is registered as a namespaced cluster,
+# so it cannot read Secrets outside the namespaces bound here (for example the
+# Sealed Secrets key in kube-system). Add a RoleBinding for each new app.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: argocd-manager
+  namespace: kube-system
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: argocd-manager-token
+  namespace: kube-system
+  annotations:
+    kubernetes.io/service-account.name: argocd-manager
+type: kubernetes.io/service-account-token
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: argocd-manager
+  namespace: nginx-test
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: admin
+subjects:
+- kind: ServiceAccount
+  name: argocd-manager
+  namespace: kube-system

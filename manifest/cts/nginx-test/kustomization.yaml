@@ -1,0 +1,29 @@
+# cts has IPv4 only and no external-dns.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../nginx-test
+  - ingress.yaml
+patches:
+  - patch: |-
+      $patch: delete
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: nginx-gv6
+        namespace: nginx-test
+  - target:
+      kind: Service
+      name: nginx
+    patch: |-
+      - op: remove
+        path: /metadata/annotations
+      - op: remove
+        path: /metadata/labels/io.cilium~1lb-pool
+      - op: replace
+        path: /spec/ipFamilyPolicy
+        value: SingleStack
+      - op: replace
+        path: /spec/ipFamilies
+        value:
+          - IPv4
