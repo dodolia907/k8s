@@ -414,7 +414,7 @@ unset KUBECONFIG
 kubectl create secret generic cluster-cts -n argocd \
   --from-literal=name=cts \
   --from-literal=server=https://<ctsノードのIPv4>:6443 \
-  --from-literal=namespaces=nginx-test \
+  --from-literal=namespaces=nginx-test,discord-tts \
   --from-literal=config="{\"bearerToken\":\"$TOKEN\",\"tlsClientConfig\":{\"caData\":\"$CA\"}}" \
   --dry-run=client -o yaml \
   | kubectl label --local -f - argocd.argoproj.io/secret-type=cluster -o yaml \
@@ -455,3 +455,21 @@ https://docs.docker.com/engine/install/debian/
 https://kubernetes.io/ja/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/
 https://docs.cilium.io/en/stable/network/l2-announcements/
 https://kubevirt.io/user-guide/cluster_admin/installation/#installing-kubevirt-on-kubernetes
+
+## Discord読み上げbot（discord-tts）
+`/join` のたびにbotが音声合成Podを作り，VCから切断すると削除する．Discordの設定とコマンドは [dodolia907/discord-tts](https://github.com/dodolia907/discord-tts) を参照．
+
+Namespace，ResourceQuota，Argo CDの権限，トークンは手動で適用する．`manifest/cts/discord-tts/` はtyhのArgo CDが同期する．
+
+```
+export KUBECONFIG=~/.kube/cts.conf
+kubectl apply -f install/cts/namespaces.yaml
+kubectl apply -f install/cts/argocd/rbac.yaml
+
+read -rs DISCORD_TOKEN
+kubectl create secret generic discord-token -n discord-tts --from-literal=DISCORD_TOKEN="$DISCORD_TOKEN" --dry-run=client -o yaml \
+  | kubeseal --controller-name sealed-secrets-controller --controller-namespace kube-system -o yaml > ~/k8s/install/cts/sealed/discord-token.yaml
+unset DISCORD_TOKEN
+kubectl apply -f install/cts/sealed/discord-token.yaml
+```
+Argo CDの操作対象に `discord-tts` を加えるため，「tyhのArgo CDへの登録」の手順で `cluster-cts` を作り直して適用する．[argocd/apps/cts-discord-tts.yaml](argocd/apps/cts-discord-tts.yaml) は，そのあとでpushする．
