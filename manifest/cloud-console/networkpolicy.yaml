@@ -61,6 +61,8 @@ spec:
               protocol: TCP
             - port: "179"
               protocol: TCP
+            - port: "6443"
+              protocol: TCP
     # In Cilium "*" does not cross a dot, so each endpoint depth is listed:
     # iaas.<region>.oraclecloud.com, usageapi.<region>.oci.oraclecloud.com.
     - toFQDNs:
