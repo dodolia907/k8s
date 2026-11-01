@@ -25,11 +25,16 @@ spec:
         runAsNonRoot: true
         runAsUser: 65532
         runAsGroup: 65532
+        fsGroup: 65532
         seccompProfile:
           type: RuntimeDefault
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: discord-tts-data
       containers:
       - name: bot
-        image: ghcr.io/dodolia907/discord-tts-bot:0.1.4
+        image: ghcr.io/dodolia907/discord-tts-bot:0.1.5
         envFrom:
         - configMapRef:
             name: discord-tts-bot
@@ -72,3 +77,6 @@ spec:
           capabilities:
             drop:
             - ALL
+        volumeMounts:
+        - name: data
+          mountPath: /data

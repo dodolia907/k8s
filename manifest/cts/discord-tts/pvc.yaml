@@ -1,0 +1,13 @@
+# Holds the per-guild reading dictionaries. Deleting this claim deletes them,
+# because local-path's reclaim policy is Delete.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: discord-tts-data
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 64Mi
