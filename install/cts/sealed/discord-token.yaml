@@ -1,0 +1,13 @@
+---
+apiVersion: bitnami.com/v1alpha1
+kind: SealedSecret
+metadata:
+  name: discord-token
+  namespace: discord-tts
+spec:
+  encryptedData:
+    DISCORD_TOKEN: AgA42QuLfJZs0Tro0oej5KEnKO2qylStC4zM/UztX/LlqvOOEiJHgttGTIcSZ0zu1ysKT1HVYhugYtFY0OmDonnOTdceiiLe4ieeJIZmPLgAnBzawhGmMjkNlF8l7w8XoGfHz43wQ8pVU2gAQBi92mEDYBsFTYN8gjb1EUTOzf567tNyQAS714wL08zpIYplkqlLmpfWKfN4d0Wv7sbrBDFgm3EWKFaP27BjqaNXsDKkF+hXi2ftJ3gXLzh9fDyirdiJDQ9IgzF1E2JO33N6eld4DpMtlfnpnXqcozbiD162CZpJhPKmvrIymh/KRoNQvKT2OxdBwJfTPQaoBp1+/caASb5W3pAuHN37liBsEXMbdv/9QZXSwGeOMmBjYWAly9HjuV1WI7CF0Uc8Ywx+A+WxRLLZRtoDp567gFRqtTyZlhDBq0j2SfATWYHOxVrxmmoGLWVX8U17lx45/WxPqlQAc5BGnUi6akSQCuafDZBSZfJUl0V/+hv+P2FJOwbQpXzqClDtOfljl+bw8mk9RaKTOtlk/48Kxn/I3U/xdu87w9QfZ8/UuWXwv6awkhRAT8tuYZex/zBuoXQbm+m4e5RtzNAsWthN0inMKLjUuuXQf/W0x67FeANlyUFED1UDfLz7S8WXTMx7RbXnvVc33FSHWgwNNbsfnPrvOuJyGrbijMpRb5u3+nDgWvXuRsiqyEP6Uro77+rIm30OBHD7pZD2RqN2CyKZrcVJdGSqqseD+kVjqRBUTOgAM6Cao7Kl7JXrC2+JqMe9ARx9dedKryAZperNMntDsOo=
+  template:
+    metadata:
+      name: discord-token
+      namespace: discord-tts
