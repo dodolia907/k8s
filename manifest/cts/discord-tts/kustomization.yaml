@@ -5,3 +5,8 @@ resources:
   - rbac.yaml
   - deployment.yaml
   - networkpolicy.yaml
+# The name gets a content hash, so changing a value restarts the bot.
+configMapGenerator:
+  - name: discord-tts-bot
+    literals:
+      - ACTIVITY_NAME=DDlia Networks Sapporo (CTS)
