@@ -1,6 +1,6 @@
 # Credentials for the Argo CD on tyh. It is registered as a namespaced cluster,
 # so it cannot read Secrets outside the namespaces bound here (for example the
-# Sealed Secrets key in kube-system). Add a RoleBinding for each new app.
+# Sealed Secrets key in kube-system). Add the Role and both RoleBindings for each new app.
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -25,6 +25,32 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
   name: admin
+subjects:
+- kind: ServiceAccount
+  name: argocd-manager
+  namespace: kube-system
+---
+# Argo CD caches every resource type in its namespaces, including types that
+# the admin ClusterRole cannot read (for example PodTemplate).
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: argocd-manager-read
+  namespace: nginx-test
+rules:
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: argocd-manager-read
+  namespace: nginx-test
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: argocd-manager-read
 subjects:
 - kind: ServiceAccount
   name: argocd-manager
