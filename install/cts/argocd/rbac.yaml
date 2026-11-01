@@ -55,3 +55,43 @@ subjects:
 - kind: ServiceAccount
   name: argocd-manager
   namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: argocd-manager
+  namespace: discord-tts
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: admin
+subjects:
+- kind: ServiceAccount
+  name: argocd-manager
+  namespace: kube-system
+---
+# Argo CD caches every resource type in its namespaces, including types that
+# the admin ClusterRole cannot read (for example PodTemplate).
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: argocd-manager-read
+  namespace: discord-tts
+rules:
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: argocd-manager-read
+  namespace: discord-tts
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: argocd-manager-read
+subjects:
+- kind: ServiceAccount
+  name: argocd-manager
+  namespace: kube-system

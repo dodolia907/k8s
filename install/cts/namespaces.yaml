@@ -7,3 +7,20 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: nginx-test
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: discord-tts
+---
+# The node has about 900m of unreserved CPU. This keeps on-demand TTS Pods within it.
+# It lives here because Argo CD's namespaced admin role cannot write ResourceQuotas.
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: discord-tts
+  namespace: discord-tts
+spec:
+  hard:
+    requests.cpu: 850m
+    pods: "3"

@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: discord-tts-bot
+  labels:
+    app.kubernetes.io/name: discord-tts
+    app.kubernetes.io/component: bot
+spec:
+  replicas: 1
+  # A second instance would log in with the same token and answer every command twice.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: discord-tts
+      app.kubernetes.io/component: bot
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: discord-tts
+        app.kubernetes.io/component: bot
+    spec:
+      serviceAccountName: discord-tts-bot
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: bot
+        image: ghcr.io/dodolia907/discord-tts-bot:0.1.0
+        env:
+        - name: DISCORD_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: discord-token
+              key: DISCORD_TOKEN
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_UID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.uid
+        - name: OPENJTALK_IMAGE
+          value: ghcr.io/dodolia907/discord-tts-openjtalk:0.1.0
+        - name: VOICEVOX_IMAGE
+          value: docker.io/voicevox/voicevox_engine:cpu-0.26.0
+        - name: DEFAULT_ENGINE
+          value: openjtalk
+        - name: MAX_SESSIONS
+          value: "2"
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 256Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
