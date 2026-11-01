@@ -29,7 +29,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: bot
-        image: ghcr.io/dodolia907/discord-tts-bot:0.1.0
+        image: ghcr.io/dodolia907/discord-tts-bot:0.1.1
         env:
         - name: DISCORD_TOKEN
           valueFrom:
