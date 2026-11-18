@@ -386,6 +386,7 @@ kubectl apply -f install/cts/namespaces.yaml
 kubectl apply -k install/cts/cilium/
 kubectl apply -f install/cts/argocd/rbac.yaml
 kubectl apply -k install/metrics-server/
+kubectl apply -k install/cts/local-path-provisioner/
 helm upgrade --install sealed-secrets-controller sealed-secrets --repo https://bitnami.github.io/sealed-secrets --version 2.22.0 -n kube-system -f install/sealed-secrets/values.yaml
 
 cilium bgp peers

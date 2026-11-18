@@ -49,6 +49,7 @@
 - `10.1.88.101` のext4 + NFSを `nfs-subdir-external-provisioner` で動的プロビジョニングする。StorageClass名は `nfs-client`。
 - iSCSIとZFSは検討のうえ不採用とした（メモリ消費と構成の複雑さのため）。提案し直さない。
 - NFS上のSQLiteやPrometheusは1レプリカかつ `Recreate` で動かす。
+- `cts` にはNFSを置かず、ノードのディスクを `local-path-provisioner` で動的プロビジョニングする。StorageClass名は `local-path` で、`storage` 名前空間に置く。
 
 ## 運用の要件
 - Argo CDは `manifest/` のアプリだけをApp of Appsで管理する。`install/` のシステムコンポーネント（Cilium、Argo CD自身、Sealed Secrets、NFS、DNS、Tunnel、KubeVirtなど）は、誤って落とさないようArgo CDで管理せず、HelmとkubectlでGitの内容を手動で適用する。
